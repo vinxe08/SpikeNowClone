@@ -1,0 +1,9 @@
+.MenuBar {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  font-size: 1.5rem;
+  border-top: 0.5px solid rgb(230, 230, 230);
+  height: 5vh;
+  padding: 0.5rem 0;
+}

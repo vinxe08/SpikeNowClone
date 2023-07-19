@@ -1,0 +1,120 @@
+.container {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background-color: rgb(233, 230, 230);
+  align-items: center;
+  justify-content: center;
+}
+
+.chatHeader{
+  background: white;
+  width: 30rem;
+  padding: 0rem 2rem;
+  display: flex;
+  border-radius: 3rem;
+}
+
+.chatButton {
+  border: none;
+  background-color: transparent;
+  cursor: pointer;
+  margin-right: 10px;
+  transition: .2s ease-in-out;
+  color: rgb(255, 198, 210)
+}
+
+.chatButton:hover{
+  transform: scale(1.2);
+  color: rgb(255, 136, 160)
+}
+
+.chatButton:active {
+  transform: scale(0.9);
+}
+
+.chatTitle {
+  color: rgb(255, 136, 160);
+  font-size: 2rem;
+  font-weight: 900;
+}
+
+.chatWindow{
+  background-color: white;
+  height: 50vh;
+  width: 30rem;
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  overflow-y: scroll;
+  border-radius: 5%;
+  margin: 1rem 0;
+}
+
+.messageContainer{
+  display: flex;
+  justify-content: start;/* start !user || end user */
+  align-items: center;  
+  padding: 0 1rem;
+  color: rgb(79, 185, 255);
+}
+
+.user{
+  justify-content: end;
+  color: rgb(22, 224, 174);
+  flex-direction: row-reverse;
+}
+
+.messageText{
+  font-size: .8rem;
+  font-weight: 700;
+  padding: 10px;
+  margin: 3rem 1rem 0 1rem;
+  border-radius: 10px;
+  color: rgb(68, 68, 68);
+  border: 1px solid rgb(197, 197, 197);
+  box-shadow: 7px 7px 7px -5px rgba(0,0,0,0.35);
+  -webkit-box-shadow: 7px 7px 7px -5px rgba(0,0,0,0.35);
+  -moz-box-shadow: 7px 7px 7px -5px rgba(0,0,0,0.35);
+}
+
+.messageUserText {
+  color: white;
+  border: none;
+  background: rgb(92,9,121);
+  background: linear-gradient(107deg, rgba(92,9,121,1) 0%, rgba(0,189,255,1) 100%);
+}
+
+.chatFooter{
+  width: 30rem;
+  background-color: white;
+  padding: 1rem 2rem;
+  border-radius: 3rem;
+  display: flex;
+}
+
+.chatField {
+  outline: none;
+  border: none;
+  flex: 1;
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: #0b2657;
+}
+
+.sendButton {
+  background-color: transparent;
+  border: none; cursor: pointer;
+  display: flex;
+  align-content: center;
+  justify-content: center;
+  border-radius: 100%;
+  padding: 1rem;
+  transition: .2s ease-in-out;
+  color: #6495ED;
+}
+
+.sendButton:hover{
+  background-color: #6495ED;
+  color: white;
+}

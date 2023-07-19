@@ -1,0 +1,44 @@
+.ChatRoom {
+  display: flex;
+  /* overflow-x: hidden; */
+}
+
+.SideBar {
+  display: flex;
+  flex-direction: column;
+  border-right: 0.5px solid rgb(230, 230, 230);
+  height: 100vh;
+  min-width: 20rem;
+}
+
+.Message__List {
+  height: 85vh;
+  overflow-y: auto;
+  position: relative;
+  /* overflow: auto; */
+}
+
+.chatroom__today {
+  font-size: 1rem;
+  padding: 0.5rem 1rem;
+}
+
+.loading__icon {
+  position: absolute;
+  top: 10rem;
+  left: 50%;
+  transform: scale(2);
+}
+
+.Conversation {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+  /* flex-shrink: 0; */
+  min-width: 25rem;
+  height: 100vh;
+}
+
+.Message__Content {
+  height: 85.1vh;
+}

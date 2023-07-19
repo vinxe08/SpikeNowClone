@@ -1,0 +1,93 @@
+.Home {
+  padding: 0.5rem 1rem;
+  display: flex;
+  flex-direction: column;
+  height: 90vh;
+}
+
+.spike__icon {
+  object-fit: cover;
+  height: 40px;
+  width: fit-content;
+  flex: 0;
+  flex-shrink: 0;
+}
+
+.home__container {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  margin: 0 auto;
+  height: 100%;
+  flex: 3;
+  text-align: center;
+}
+
+.home__welcome {
+  font-size: 3rem;
+  color: rgb(54, 54, 54);
+  font-family: "Open Sans", sans-serif;
+  margin-bottom: 0;
+}
+
+.home__text {
+  font-size: 1.2rem;
+  color: rgb(54, 54, 54);
+  font-family: "Open Sans", sans-serif;
+}
+
+.home__email {
+  padding: 1rem;
+  font-size: 1rem;
+  border: none;
+  background: rgb(235, 233, 233);
+  border-radius: 10px;
+  outline: none;
+}
+
+.continue__button {
+  margin: 10px 0;
+  padding: 1rem;
+  border: none;
+  border-radius: 10px;
+  font-size: 1rem;
+  font-weight: 700;
+  color: white;
+  background: rgb(0, 119, 255);
+  cursor: pointer;
+  transition: 0.2s ease-in-out;
+}
+
+.continue__button:active {
+  transform: scale(0.9);
+}
+
+.continue__button:disabled {
+  background-color: rgb(196, 196, 196);
+  color: white;
+  cursor: default;
+}
+
+.microsoft__button {
+  margin: 10px 0;
+  padding: 0.5rem;
+  border: 1px solid rgb(202, 202, 202);
+  background: white;
+  border-radius: 10px;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: 0.2s ease-in-out;
+}
+
+.microsoft__button:active {
+  transform: scale(0.9);
+}
+
+.microsoft__icon {
+  object-fit: cover;
+  height: 35px;
+  width: fit-content;
+  flex: 0;
+  flex-shrink: 0;
+}

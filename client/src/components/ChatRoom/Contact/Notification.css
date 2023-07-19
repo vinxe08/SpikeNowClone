@@ -1,0 +1,73 @@
+.incoming__call {
+  position: absolute;
+  height: 100vh;
+  width: 100vw;
+  background: #000000be;
+  top: 0;
+  left: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.incoming__container {
+  height: 50vh;
+  width: 30vw;
+  background: white;
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.callers__avatar {
+  background: rgb(24, 143, 255);
+  color: white;
+  padding: 0.7rem 1.6rem;
+  border-radius: 50%;
+  text-transform: uppercase;
+  margin-bottom: 2rem;
+}
+
+.callers__name {
+  font-size: 1.4rem;
+}
+
+.call__type {
+  font-size: 1rem;
+  color: gray;
+  margin-bottom: 2rem;
+}
+
+.callers__button {
+  display: flex;
+  justify-content: space-around;
+  width: 100%;
+}
+
+.callers__ignore,
+.callers__accept {
+  cursor: pointer;
+  border: none;
+  border-radius: 50%;
+  font-size: 2.5rem;
+
+  color: white;
+  display: flex;
+  padding: 1rem 1.2rem;
+  transition: 0.2s ease-in-out;
+}
+
+.callers__ignore:active,
+.callers__accept:active {
+  transform: scale(0.9);
+}
+
+.callers__ignore {
+  background-color: rgb(255, 106, 106);
+}
+
+.callers__accept {
+  background: rgb(5, 224, 122);
+}

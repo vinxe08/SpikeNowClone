@@ -1,0 +1,98 @@
+.RegistrationPage {
+  border: 0.5px solid rgb(238, 238, 238);
+  border-radius: 10px;
+  margin: auto;
+  width: 35rem;
+  max-height: 70vh;
+  overflow-y: auto;
+}
+
+.registration__header {
+  display: flex;
+  align-items: center;
+  padding: 0.7rem 1rem;
+  border-bottom: 0.5px solid rgb(238, 238, 238);
+  font-size: 1.5rem;
+}
+
+.registration__close {
+  font-size: 1.3rem;
+  flex-grow: 1;
+  cursor: pointer;
+}
+
+.registration__notimap {
+  font-size: 0.8rem;
+  font-weight: 400;
+  text-decoration: underline;
+  cursor: pointer;
+  margin-right: 20px;
+}
+
+.registration__imap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2.5rem;
+  padding: 1.5rem;
+}
+
+.registration__imapText {
+  margin-left: 15px;
+  font-size: 2.5rem;
+  font-weight: 500;
+  margin-top: -5.5px;
+}
+
+.registration__form {
+  display: flex;
+  flex-direction: column;
+  padding: 0 1rem 1rem 1rem;
+}
+
+.registration__field {
+  border: 0.5px solid rgb(238, 238, 238);
+  border-radius: 7px;
+  outline: none;
+  padding: 0.7rem;
+  font-size: 1rem;
+  margin-bottom: 13px;
+}
+
+.registration__show {
+  display: flex;
+  margin-bottom: 13px;
+  padding: 0 5px;
+}
+
+.drop__down {
+  cursor: pointer;
+}
+
+.advance__setting {
+  font-size: 0.95rem;
+  font-weight: 400;
+  flex-grow: 1;
+}
+
+.registration__submit {
+  border: none;
+  border-radius: 9px;
+  padding: 0.65rem;
+  font-size: 0.9rem;
+  font-weight: 700;
+  background: rgb(0, 119, 255);
+  color: white;
+  cursor: pointer;
+  transition: 0.3s ease-in-out;
+}
+
+.registration__submit:active {
+  transform: scale(0.9);
+}
+
+.registration__submit:disabled {
+  background-color: rgb(199, 199, 199);
+  color: rgb(80, 80, 80);
+  cursor: not-allowed;
+}

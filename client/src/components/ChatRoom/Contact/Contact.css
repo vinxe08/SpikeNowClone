@@ -1,0 +1,194 @@
+.Contact {
+  border-left: 0.5px solid rgb(238, 238, 238);
+  font-family: "Open Sans", sans-serif;
+  display: flex;
+  /* min-width: 25rem; */
+  flex-shrink: 0;
+  /* flex-grow: 1; */
+}
+
+.contact__container {
+  display: flex;
+  flex-direction: column;
+
+  width: 18rem;
+  /* flex: 1; */
+}
+
+.contact__header {
+  display: flex;
+  font-family: "Open Sans", sans-serif;
+  border-bottom: 0.5px solid rgb(230, 230, 230);
+  padding: 0.15rem;
+  height: 2.91rem;
+  align-items: center;
+  padding: 0 1rem;
+  font-size: 1.3rem;
+}
+
+.contact__close {
+  cursor: pointer;
+  transition: 0.2s ease-in-out;
+  font-size: 1.9rem;
+  margin-top: 8px;
+}
+
+.contact__close:active {
+  transform: scale(0.9);
+}
+
+.contact__h1 {
+  font-size: 1.3rem;
+  margin-left: 20px;
+}
+
+.contact__infoSection {
+  display: flex;
+  flex-direction: column;
+}
+
+.contact__userInfo {
+  display: flex;
+  align-items: end;
+  /* background: rgb(23, 149, 233); */
+  padding: 1rem;
+  height: 10rem;
+
+  background-image: linear-gradient(
+      to bottom,
+      #7dbcff,
+      #007bff,
+      #007bff,
+      #7dbcff
+    ),
+    linear-gradient(to right, #dde6f7, #dde6f7, #007bff, #dde6f7, #dde6f7);
+  background-position: top, left;
+  background-repeat: no-repeat;
+}
+
+.avatar__container {
+  display: flex;
+}
+
+.contact__nameAvatar {
+  color: rgb(233, 233, 233);
+  background: rgb(23, 149, 233);
+  padding: 0.5rem 1rem;
+  border-radius: 50%;
+  border: 2px solid white;
+  font-size: 1.35rem;
+  font-weight: 500;
+}
+
+.name__email {
+  color: white;
+  margin-left: 1rem;
+  margin-bottom: 3px;
+  display: flex;
+  flex-direction: column;
+
+  /* white-space: normal; */
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.namee {
+  font-size: 1.2rem;
+}
+
+.emaill {
+  font-size: 0.8rem;
+}
+
+.contact__callSection {
+  display: flex;
+  color: white;
+  padding: 0.7rem 1rem;
+  align-items: center;
+}
+
+.call__now {
+  font-size: 0.9rem;
+  font-weight: 400;
+  color: black;
+  flex-grow: 1;
+}
+
+.video__section,
+.phone__section {
+  cursor: pointer;
+  background: rgb(0, 110, 255);
+  padding: 0.6rem 0.8rem;
+  border-radius: 50%;
+  font-size: 1rem;
+  display: flex;
+  align-items: center;
+  margin-left: 15px;
+}
+
+.threads__section {
+  display: flex;
+  flex-direction: column;
+}
+
+.threads__title {
+  font-size: 0.8rem;
+  font-weight: 500;
+  padding: 0.7rem 1rem;
+}
+
+.threads__container {
+  padding: 0.7rem 1rem;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  transition: 0.2s ease-in-out;
+}
+
+.threads__container:hover {
+  background: rgb(221, 221, 221);
+}
+
+.threads__avatar {
+  font-size: 1.45rem;
+  font-weight: 500;
+  background: rgb(0, 110, 255);
+  color: white;
+  padding: 0.35rem 0.95rem;
+  border-radius: 50%;
+}
+
+.threads__info {
+  margin-left: 15px;
+  font-size: 7px;
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+}
+
+.threads__user {
+  display: flex;
+  align-items: center;
+}
+
+.threads__name {
+  color: rgb(37, 37, 37);
+  font-size: 1rem;
+  flex-grow: 1;
+}
+
+.threads__timestamp {
+  font-size: 0.68rem;
+  color: rgb(189, 189, 189);
+}
+
+.threads__subject,
+.threads__message {
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.threads__message {
+  font-weight: 400;
+  color: gray;
+}

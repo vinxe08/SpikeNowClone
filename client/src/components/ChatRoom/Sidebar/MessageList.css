@@ -1,0 +1,78 @@
+h1 {
+  margin: 0 0;
+}
+
+.MessageList {
+  display: flex;
+  align-items: center;
+  font-family: "Open Sans", sans-serif;
+  cursor: pointer;
+  margin-bottom: 10px;
+  transition: 0.15s ease-in-out;
+  min-width: 15rem;
+  /* overflow-y: ; */
+  overflow-x: hidden;
+}
+
+.MessageList:hover {
+  background: rgb(243, 243, 243);
+}
+
+.message__avatar {
+  padding: 0.68rem 1.08rem;
+  border-radius: 50%;
+  background: rgb(0, 81, 255);
+  color: white;
+  margin: 0 1rem;
+  text-transform: uppercase;
+}
+
+.message__sender {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+  padding: 0.5rem 0.9rem 0.5rem 0;
+}
+
+.message_name,
+.message__subject {
+  display: flex;
+  align-items: center;
+}
+
+.message_name {
+  margin-bottom: 5px;
+}
+
+.name,
+.subject {
+  flex-grow: 1;
+}
+
+.name {
+  font-size: 0.9rem;
+}
+
+.timestamp {
+  font-family: "Roboto", sans-serif;
+  font-size: 0.7rem;
+  color: rgb(192, 192, 192);
+}
+
+.subject,
+.messages {
+  font-family: "Work Sans", sans-serif;
+  font-size: 0.85rem;
+}
+
+.message__count {
+  color: white;
+  background: rgb(0, 81, 255);
+  border-radius: 50%;
+  font-size: 0.6rem;
+  padding: 0.05rem 0.1rem;
+}
+
+.messages {
+  color: rgb(155, 155, 155);
+}

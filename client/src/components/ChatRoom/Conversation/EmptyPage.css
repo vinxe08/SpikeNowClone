@@ -1,0 +1,14 @@
+.EmptyPage {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex: 1;
+}
+
+.emptypage__icon {
+  object-fit: cover;
+  height: 150px;
+  width: fit-content;
+  flex: 0;
+  flex-shrink: 0;
+}

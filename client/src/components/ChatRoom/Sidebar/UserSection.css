@@ -1,0 +1,72 @@
+h1 {
+  margin: 0 0;
+}
+
+.UserSection {
+  display: flex;
+  align-items: center;
+  padding: 0 0.9rem 0 1.14rem;
+  border-bottom: 0.5px solid rgb(230, 230, 230);
+  height: 2.95rem;
+  font-family: "Open Sans", sans-serif;
+}
+
+.user__avatar {
+  position: relative;
+  background: rgb(0, 81, 255);
+  color: white;
+  padding: 0.2rem 0.6rem;
+  border-radius: 50%;
+  font-size: 1.15rem;
+  cursor: pointer;
+  text-transform: uppercase;
+}
+
+.hamburger__icon {
+  position: absolute;
+  top: 16px;
+  left: -7px;
+  font-size: 10px;
+  padding: 0.1rem 0.2rem;
+  background: rgb(233, 233, 233);
+  color: gray;
+  border-radius: 50%;
+}
+
+.priority__section {
+  margin: 0 0.7rem;
+  flex-grow: 1;
+  cursor: pointer;
+}
+
+.priority__text {
+  display: flex;
+  justify-items: center;
+  align-items: center;
+}
+
+.priority {
+  font-size: 1.25rem;
+  margin-right: 0.3rem;
+}
+
+.priority__icon {
+  font-size: 1.6rem;
+  display: flex;
+  color: gray;
+}
+
+.user__email {
+  font-size: 0.7rem;
+  color: rgb(85, 85, 85);
+}
+
+.right__icon {
+  display: flex;
+  font-size: 1.7rem;
+  cursor: pointer;
+}
+
+.margin {
+  margin-left: 12px;
+}
