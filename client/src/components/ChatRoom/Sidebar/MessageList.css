@@ -27,6 +27,16 @@ h1 {
   text-transform: uppercase;
 }
 
+.message__avatarIcon {
+  padding: 0.38rem 0.78rem;
+  border-radius: 50%;
+  background: rgb(0, 81, 255);
+  color: white;
+  margin: 0 1rem;
+  text-transform: uppercase;
+  font-size: 1.7rem;
+}
+
 .message__sender {
   display: flex;
   flex-direction: column;

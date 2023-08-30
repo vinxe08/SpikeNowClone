@@ -1,116 +1,139 @@
 import { useEffect, useRef, useState } from "react";
-import { useSelector } from "react-redux";
-import { useOutletContext } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
 import Peer from "simple-peer";
+import io from "socket.io-client";
+import { setIsCalling } from "../../../features/show/showSlice";
 
 export function useVoiceChat() {
-  const { socket } = useOutletContext();
-  const [callAccepted, setCallAccepted] = useState(false);
-  const [callEnded, setCallEnded] = useState(false);
-  const [stream, setStream] = useState();
-  const [call, setCall] = useState({});
-
-  const myVoice = useRef();
+  const dispatch = useDispatch();
+  const [peers, setPeers] = useState([]);
+  const socketRef = useRef();
   const userVoice = useRef();
-  const connectionRef = useRef();
+  const peersRef = useRef([]);
 
-  const user = useSelector((state) => state.emailReducer.user);
+  const user = useSelector((state) => state.emailReducer.user.email);
   const state = useSelector((state) => state.emailReducer.email);
   const allRecipients = useSelector((state) => state.emailReducer.recipients);
+
   const recipient = allRecipients?.filter(
     (data) =>
-      data.users.includes(state?.[0].header.from?.[0]?.email) &&
-      data.users.includes(state?.[0].header.to?.[0]?.email)
+      data.users.includes(
+        state?.[0].header.from?.[0]?.email || state?.[0].header.from?.[0]
+      ) &&
+      data.users.includes(
+        state?.[0].header.to?.[0]?.email || state?.[0].header.to?.[0]
+      )
   );
 
   useEffect(() => {
+    console.log("PEERS: ", peers);
+    socketRef.current = io.connect("http://localhost:3001");
     navigator.mediaDevices
       .getUserMedia({ audio: true })
-      .then((currentStream) => {
-        setStream(currentStream);
-      })
-      .catch((error) => console.log("ERROR: ", error));
+      .then((stream) => {
+        userVoice.current.srcObject = stream;
 
-    socket.on("receive_request", ({ signal, email, type }) => {
-      setCall({ isReceivingCall: true, email, signal, type });
-    });
+        // REGISTER IN SERVER - USER TO RECEIVER
+        socketRef.current.emit("join room", { roomID: recipient[0]._id, user });
+
+        // POV: RECEIVER
+        socketRef.current.on("all users", (users) => {
+          const peers = [];
+          users.forEach((user) => {
+            const peer = createPeer(user.userID, socketRef.current.id, stream);
+            peersRef.current.push({
+              peerID: user.userID,
+              peer,
+            });
+            peers.push({ peer, user: user.user, peerID: user.userID });
+          });
+          setPeers(peers);
+        });
+
+        // POV: USER
+        socketRef.current.on("user joined", (payload) => {
+          const peer = addPeer(payload.signal, payload.callerID, stream);
+          peersRef.current.push({
+            peerID: payload.callerID,
+            peer,
+          });
+
+          setPeers((users) => [
+            ...users,
+            { peer, user: payload.user, peerID: payload.callerID },
+          ]);
+        });
+
+        socketRef.current.on("receiving returned signal", (payload) => {
+          const item = peersRef.current.find((p) => p.peerID === payload.id);
+          setTimeout(() => {
+            item.peer.signal(payload.signal);
+          }, 1000);
+        });
+
+        socketRef.current.on("user left", (id) => {
+          const peerObj = peersRef.current.find((p) => p.peerID === id);
+          if (peerObj) {
+            peerObj.peer.destoy();
+          }
+          const peers = peersRef.current.filter((p) => p.peerID !== id);
+          peersRef.current = peers;
+          setPeers(peers);
+        });
+      })
+      .catch((error) => console.log("ERROR: ", error)); // Add an Error animation
   }, []);
 
-  const joinCall = () => {
+  function createPeer(userToSignal, callerID, stream) {
     const peer = new Peer({
       initiator: true,
       trickle: false,
       stream,
     });
 
-    peer.on("signal", (data) => {
-      socket.emit("video_request", {
-        id: recipient[0]._id,
-        // name: state[0].header.to[0]?.name,
-        email: user.email,
-        type: "Video Call",
-        signalData: data,
+    peer.on("signal", (signal) => {
+      // RECEIVER TO USER
+      socketRef.current.emit("sending signal", {
+        userToSignal,
+        callerID,
+        signal,
+        user,
       });
     });
-    peer.on("stream", (currentStream) => {
-      if (userVoice.current) {
-        userVoice.current.srcObject = currentStream;
-      }
-    });
 
-    socket.on("call_accepted", (data) => {
-      // add email here for who accept
-      setCall({ email: data.callee, type: "Video Call" });
-      setCallAccepted(true);
-      peer.signal(data.signal);
-    });
+    return peer;
+  }
 
-    connectionRef.current = peer;
-  };
-
-  // Answer Call
-  const callResponse = () => {
-    setCallAccepted(true);
+  function addPeer(incomingSignal, callerID, stream) {
     const peer = new Peer({
       initiator: false,
       trickle: false,
-      stream: stream,
+      stream,
     });
-    peer.on("signal", (data) => {
-      socket.emit("accept_call", {
-        callee: user.email,
-        signal: data,
-        to: recipient[0]._id,
-      });
-    });
-    peer.on("stream", (currentStream) => {
-      userVoice.current.srcObject = currentStream;
-    });
-    peer.signal(call.signal);
 
-    connectionRef.current = peer;
-  };
+    peer.on("signal", (signal) => {
+      // USER TO RECEIVER
+      socketRef.current.emit("returning signal", { signal, callerID });
+    });
+
+    setTimeout(() => {
+      peer.signal(incomingSignal);
+    }, 1000);
+
+    return peer;
+  }
 
   const leaveCall = () => {
-    console.log("LEAVE CALL");
-    setStream(null);
-    setCallEnded(true);
-    // dispatch(setIsCalling(false));
-
-    // socket.emit("end_call", { id: recipient[0]._id, disconnect: true });
-
-    window.location.reload();
+    socketRef.current.emit("leave call");
+    if (userVoice.current) {
+      userVoice.current.srcObject.getTracks().forEach((track) => track.stop());
+      dispatch(setIsCalling(false));
+    }
   };
 
   return {
-    stream,
-    call,
-    callAccepted,
-    callEnded,
-    myVoice,
     userVoice,
+    peers,
     leaveCall,
-    joinCall,
-    callResponse,
   };
 }

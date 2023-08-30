@@ -15,6 +15,6 @@ module.exports = async (data) => {
     return response;
   } catch (error) {
     // return [];
-    console.log("ERROR", error);
+    // console.log("ERROR", error);
   }
 };

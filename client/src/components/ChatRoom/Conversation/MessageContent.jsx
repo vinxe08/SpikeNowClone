@@ -11,63 +11,73 @@ function MessageContent() {
   const [email, setEmail] = useState([]);
   const { socket } = useOutletContext();
   const dispatch = useDispatch();
+  const spreadEmail = [...email];
+  // console.log("EMAIL: ", state);
+
+  const sortedArray = spreadEmail.sort((a, b) => {
+    const dateA = new Date(a.header.date[0]);
+    const dateB = new Date(b.header.date[0]);
+    return dateA - dateB;
+  });
 
   useEffect(() => {
     // For realtime data for recipient
     socket.on("receive_email", (data) => {
-      console.log("receive_email: ", data);
       dispatch(addEmail(data));
+      // console.log("RECEIVE_EMAIL: ", data);
     });
   }, [socket]);
 
   useEffect(() => {
     setEmail(state.email);
+
+    // console.log("MESSAGE_CONTENT: ", state.email);
   }, [state.email]);
 
-  // useEffect(() => {
-  //   setEmail(null);
-  // }, []);
-
-  // console.log("EMAIL: ", state.email);
+  // console.log("SORTED: ", sortedArray);
 
   return (
     <ScrollToBottom className="scroll-to-bottom ">
       <div className="MessageContent">
-        {email?.map((message, index) => (
-          <div
-            key={index}
-            className={
-              state.user === message.user
-                ? "content__section is__user"
-                : "content__section"
-            }
-          >
-            <h1 className="content__timestamp">
-              <TimeAgo date={message.header.date[0]} />
-            </h1>
-            <div className="content__div">
-              <div
-                className={
-                  state.user === message.user
-                    ? "content__avatar content__user"
-                    : "content__avatar"
-                }
-              >
-                {/* {message.user[0]} */}
-              </div>
-              <div className="content__body">
-                <h1 className="content__subject">
-                  {message.header.subject[0]}
-                </h1>
-                {/* <pre className="content__message">{message.body}</pre> */}
-                <pre
-                  className="content__message"
-                  dangerouslySetInnerHTML={{ __html: message.body }}
-                />
-              </div>
-            </div>
-          </div>
-        ))}
+        {email?.[0]?.body || email?.[1]?.body
+          ? sortedArray
+              .filter((mail) => mail.body)
+              .map((message, index) => (
+                <div
+                  key={index}
+                  className={
+                    state.user.email === message.header.from[0].email
+                      ? "content__section is__user"
+                      : "content__section"
+                  }
+                >
+                  <h1 className="content__timestamp">
+                    <TimeAgo date={message?.header?.date?.[0]} />
+                  </h1>
+                  <div className="content__div">
+                    <div
+                      className={
+                        state.user.email === message.header.from?.[0].email
+                          ? "content__avatar content__user"
+                          : "content__avatar"
+                      }
+                    >
+                      {message.header.from?.[0].email?.[0]}
+                    </div>
+                    <div className="content__body">
+                      <h1 className="content__subject">
+                        {message?.header?.subject?.[0]}
+                      </h1>
+                      {/* <pre className="content__message">{message.body}</pre> */}
+                      <pre
+                        className="content__message"
+                        dangerouslySetInnerHTML={{ __html: message?.body }}
+                      />
+                    </div>
+                  </div>
+                </div>
+              ))
+          : null}
       </div>
     </ScrollToBottom>
   );

@@ -5,8 +5,9 @@ import "./Notification.css";
 import { setCaller } from "../../../features/show/showSlice";
 import { useOutletContext } from "react-router-dom";
 
+// CALLERS NOTIFICATION
 function CallingNotification({ caller, modal }) {
-  console.log("CALLER: ", caller, modal);
+  // console.log("CALLER: ", caller, modal);
 
   const dispatch = useDispatch();
   const { socket } = useOutletContext();

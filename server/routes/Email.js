@@ -40,7 +40,7 @@ router.get("/data", async (req, res) => {
     const data = await graphResponse.json();
     res.json(data);
   } catch (error) {
-    console.log("ERROR: ", error);
+    // console.log("ERROR: ", error);
   }
 });
 

@@ -5,7 +5,7 @@ module.exports = async (data) => {
   try {
     const response = await Users.find({ email: email });
 
-    console.log("CREATE: TRY");
+    // console.log("CREATE: TRY");
     if (response.length > 0) {
       return { error: false, userExist: true };
     } else {
@@ -13,7 +13,7 @@ module.exports = async (data) => {
       return { error: false, userExist: false };
     }
   } catch (error) {
-    console.log("CREATE: CATCH", error);
+    // console.log("CREATE: CATCH", error);
     return { error: true, userExist: false };
   }
 };

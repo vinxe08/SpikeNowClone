@@ -1,64 +1,49 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef } from "react";
 import { IoMdResize } from "react-icons/io";
 import { IoClose } from "react-icons/io5";
 import { useDispatch, useSelector } from "react-redux";
 import { useOutletContext } from "react-router-dom";
 import { setIsCalling } from "../../../features/show/showSlice";
-import { useVideoChat } from "./useVideoChat";
+import { useVoiceChat } from "./useVoiceChat";
 import "./VoiceChatPage.css";
 
-function VoiceChatPage() {
-  const user = useSelector((state) => state.emailReducer.user.email);
-  const dispatch = useDispatch();
-  const [userJoined, setUserJoined] = useState(false);
-  const { socket } = useOutletContext();
-  // const {
-  //   stream,
-  //   call,
-  //   callAccepted,
-  //   callEnded,
-  //   myVideo,
-  //   userVideo,
-  //   joinRoom,
-  //   callResponse,
-  //   leaveCall,
-  // } = useVideoChat();
+const Audio = ({ voice }) => {
+  const ref = useRef();
 
-  // const closeCall = () => {
-  //   dispatch(setIsCalling(false));
-
-  //   const myStream = myVideo.current.srcObject;
-  //   const tracks = myStream.getTracks();
-
-  //   tracks.forEach((track) => {
-  //     track.stop();
-  //   });
-
-  //   myVideo.current.srcObject = null;
-
-  //   // SEND NOTIFICATION THAT WILL CLOSE THE CONNECTION
-  // };
-
-  const join = () => {
-    // callResponse();
-    setUserJoined(true);
-  };
-
-  // useEffect(() => {
-  // socket.on("when_accept", (data) => {
-  //   if (stream) {
-  //     joinRoom();
-  //   }
-  //   // console.log("when_accept: for sender: ", data);
-  // });
-  // }, [stream]);
+  useEffect(() => {
+    voice.peer.on("stream", (stream) => {
+      ref.current.srcObject = stream;
+    });
+  }, [voice]);
 
   return (
-    <div className="VideoCallPage">
-      <div className="videocall__container">
-        <div className="video__header">
+    <div className="recipient__voice">
+      <h1 className="voice__user">{voice.user}</h1>
+      <audio className="voice__camera" playsInline ref={ref} autoPlay />
+    </div>
+  );
+};
+
+function VoiceChatPage() {
+  const { socket } = useOutletContext();
+  const user = useSelector((state) => state.emailReducer.user.email);
+  const { userVoice, peers, leaveCall } = useVoiceChat();
+  const dispatch = useDispatch();
+
+  // useEffect(() => {
+  //   socket.on("end_call", () => {
+  //     dispatch(setIsCalling(false));
+
+  //     window.location.reload();
+  //   });
+  // }, [socket]);
+
+  return (
+    <div className="VoiceChatPage">
+      <div className="voicecall__container">
+        <div className="voice__header">
           {/* <div className="close" onClick={leaveCall}> */}
-          <div className="close" onClick={() => console.log("LOGIN")}>
+          <div className="close" onClick={leaveCall}>
             <IoClose />
           </div>
           <div
@@ -68,36 +53,27 @@ function VoiceChatPage() {
             <IoMdResize />
           </div>
         </div>
-        {/* BEFORE JOIN */}
 
-        <div className="videocall__setup">
+        <div className="voicecall__setup">
           <h1>THIS IS VOICE CHAT</h1>
           {/* ISSUE: stream is undefined at first render */}
-          {/* {stream && myVideo && (
-            <div className="my__video">
-              <h1 className="video__user">{user}</h1>
-              <video
-                className="video__camera"
+          {userVoice && (
+            <div className="my__voice">
+              <h1 className="voice__user">{user}</h1>
+              <audio
+                className="voice__camera"
                 playsInline
                 muted
-                ref={myVideo}
+                ref={userVoice}
                 autoPlay
               />
             </div>
-          )} */}
-          {/* {callAccepted && !callEnded && userVideo && (
-            <div className="recipient__video">
-              <h1 className="video__user">{call?.email}</h1>
-              <video
-                className="video__camera"
-                playsInline
-                ref={userVideo}
-                autoPlay
-              />
-            </div>
-          )} */}
+          )}
+
+          {peers.map((voice) => (
+            <Audio key={voice.peerID} voice={voice} />
+          ))}
         </div>
-        {/* )} */}
       </div>
     </div>
   );

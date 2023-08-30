@@ -129,6 +129,8 @@
 .threads__section {
   display: flex;
   flex-direction: column;
+  height: 50vh;
+  overflow-y: auto;
 }
 
 .threads__title {

@@ -8,15 +8,15 @@ module.exports = async (data) => {
     });
 
     if (conversations) {
-      console.log("RETRIEVE: tryIF");
+      // console.log("RETRIEVE: tryIF");
 
       return conversations;
     } else {
-      console.log("RETRIEVE: tryELSE");
+      // console.log("RETRIEVE: tryELSE");
       return [];
     }
   } catch (error) {
-    console.log("RETRIEVE: catch");
+    // console.log("RETRIEVE: catch");
     return [];
   }
 };

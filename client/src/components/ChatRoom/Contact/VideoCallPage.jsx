@@ -1,57 +1,47 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef } from "react";
 import { IoMdResize } from "react-icons/io";
 import { IoClose } from "react-icons/io5";
 import { useDispatch, useSelector } from "react-redux";
 import { useOutletContext } from "react-router-dom";
-import { setIsCalling } from "../../../features/show/showSlice";
-import { useVideoChat } from "./useVideoChat";
 import "./VideoCallPage.css";
+import { useVideoChat } from "./useVideoChat";
+import { setIsCalling } from "../../../features/show/showSlice";
+
+const Video = ({ video }) => {
+  const ref = useRef();
+
+  useEffect(() => {
+    video.peer.on("stream", (stream) => {
+      ref.current.srcObject = stream;
+    });
+  }, [video]);
+
+  return (
+    <div className="recipient__video">
+      <h1 className="video__user">{video.user}</h1>
+      {ref && (
+        <video className="video__camera" playsInline ref={ref} autoPlay />
+      )}
+    </div>
+  );
+};
 
 function VideoCallPage() {
   const user = useSelector((state) => state.emailReducer.user.email);
-  const dispatch = useDispatch();
-  const [userJoined, setUserJoined] = useState(false);
   const { socket } = useOutletContext();
-  const {
-    stream,
-    call,
-    callAccepted,
-    callEnded,
-    myVideo,
-    userVideo,
-    joinRoom,
-    callResponse,
-    leaveCall,
-  } = useVideoChat();
+  const dispatch = useDispatch();
 
-  const closeCall = () => {
-    dispatch(setIsCalling(false));
+  const { userVideo, peers, leaveCall } = useVideoChat();
 
-    const myStream = myVideo.current.srcObject;
-    const tracks = myStream.getTracks();
+  console.log("PEERS:", peers);
+  // useEffect(() => {
+  //   socket.on("end_call", () => {
+  //     dispatch(setIsCalling(false));
+  //     socket.emit("leave call");
 
-    tracks.forEach((track) => {
-      track.stop();
-    });
-
-    myVideo.current.srcObject = null;
-
-    // SEND NOTIFICATION THAT WILL CLOSE THE CONNECTION
-  };
-
-  const join = () => {
-    callResponse();
-    setUserJoined(true);
-  };
-
-  useEffect(() => {
-    socket.on("when_accept", (data) => {
-      if (stream) {
-        joinRoom();
-      }
-      // console.log("when_accept: for sender: ", data);
-    });
-  }, [stream]);
+  //     // window.location.reload();
+  //   });
+  // }, [socket]);
 
   return (
     <div className="VideoCallPage">
@@ -67,41 +57,25 @@ function VideoCallPage() {
             <IoMdResize />
           </div>
         </div>
-        {/* BEFORE JOIN */}
 
         <div className="videocall__setup">
-          {/* ISSUE: stream is undefined at first render */}
-          {stream && myVideo && (
+          {userVideo && (
             <div className="my__video">
               <h1 className="video__user">{user}</h1>
               <video
                 className="video__camera"
                 playsInline
                 muted
-                ref={myVideo}
-                autoPlay
-              />
-            </div>
-          )}
-          {callAccepted && !callEnded && userVideo && (
-            <div className="recipient__video">
-              <h1 className="video__user">{call?.email}</h1>
-              <video
-                className="video__camera"
-                playsInline
                 ref={userVideo}
                 autoPlay
               />
             </div>
           )}
-          {call.isReceivingCall && !userJoined ? (
-            <button onClick={join} className="videocall__join">
-              {/* Join Meeting */}
-              Join
-            </button>
-          ) : null}
+
+          {peers.map((video) => (
+            <Video key={video.peerID} video={video} />
+          ))}
         </div>
-        {/* )} */}
       </div>
     </div>
   );

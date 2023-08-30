@@ -1,0 +1,163 @@
+.group__modal {
+  position: absolute;
+  height: 100vh;
+  width: 100vw;
+  background: rgba(0, 0, 0, 0.288);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.group__modalContainer {
+  height: 60vh;
+  width: 25vw;
+  background: white;
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+}
+
+.group__modalHeader {
+  display: flex;
+  align-items: center;
+  border-bottom: 1px solid rgb(226, 226, 226);
+  padding: 0.2rem 1rem 0.5rem 1rem;
+}
+
+.group__closeIcon {
+  font-size: 1.6rem;
+  margin-right: 10px;
+  cursor: pointer;
+}
+
+.group__details {
+  display: flex;
+  flex-direction: column;
+}
+
+.group__emailDetails {
+  display: flex;
+  align-items: center;
+  font-size: 0.8rem;
+  border-left: 2px solid rgb(122, 6, 122);
+}
+
+.grou__userEmail {
+  font-size: 0.8rem;
+  margin-top: -5px;
+  margin-right: 5px;
+  margin-left: 5px;
+  font-weight: 600;
+}
+
+.modal__error {
+  color: crimson;
+  font-size: 1rem;
+  padding: 0.5rem 1.2rem;
+}
+
+.group__form {
+  display: flex;
+  align-items: center;
+  padding: 0.5rem 1.2rem;
+  border-bottom: 1px solid rgb(226, 226, 226);
+}
+
+.group__formfield {
+  display: flex;
+  flex-direction: column;
+}
+
+.group__name,
+.group__description {
+  outline: none;
+  border: none;
+  margin: 3px 0;
+  padding-left: 10px;
+}
+
+.group__name {
+  font-size: 1rem;
+}
+
+.group__name::placeholder {
+  color: rgb(99, 99, 99);
+}
+
+.invite__field {
+  outline: none;
+  border: none;
+  font-size: 1rem;
+  padding: 1rem;
+}
+
+.divider {
+  border-bottom: 1px solid rgb(226, 226, 226);
+}
+
+.group__inviteRow {
+  display: flex;
+  flex-direction: column;
+  border-bottom: 1px solid rgb(226, 226, 226);
+  height: 30vh;
+  overflow-y: auto;
+}
+
+.group__usersRow {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  padding: 0.5rem 1rem;
+}
+
+.group__usersRow:hover {
+  background: rgb(219, 219, 219);
+}
+
+.group__usersAvatar {
+  background: rgb(56, 138, 233);
+  color: white;
+  border-radius: 50%;
+  margin-right: 15px;
+  font-size: 1.2rem;
+  padding: 0.2rem 0.7rem;
+}
+
+.group__userInfo {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+}
+
+.group__userName {
+  font-size: 0.9rem;
+}
+
+.group__userEmail {
+  font-size: 0.85rem;
+  font-weight: 400;
+  color: gray;
+}
+
+.group__button {
+  display: flex;
+  flex-direction: column;
+  padding: 0.5rem 1rem;
+}
+
+.arrow__button {
+  cursor: pointer;
+  display: flex;
+  font-size: 1.5rem;
+  color: white;
+  background: rgb(56, 138, 233);
+  border: none;
+  padding: 0.7rem;
+  border-radius: 50%;
+  align-self: flex-end;
+  transition: 0.2s ease-in-out;
+}
+
+.arrow__button:active {
+  transform: scale(0.9);
+}

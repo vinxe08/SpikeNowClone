@@ -5,6 +5,7 @@ const nodeMailer = require("nodemailer");
 const CreateServices = require("../services/Conversation/Create");
 const UpdateServices = require("../services/Conversation/Update");
 const RetrieveServices = require("../services/Conversation/Retrieve");
+const RetrieveGroupServices = require("../services/GroupConversation/Retrieve");
 
 router.post("/create", async (req, res) => {
   const result = await CreateServices(req.body);
@@ -17,8 +18,15 @@ router.post("/reply", async (req, res) => {
 });
 
 router.post("/send", async (req, res) => {
-  const { email, smtp_server, smtp_port, password, receiver, message } =
-    req.body;
+  const {
+    email,
+    smtp_server,
+    smtp_port,
+    password,
+    receiver,
+    message,
+    subject,
+  } = req.body;
 
   try {
     const main = async () => {
@@ -34,12 +42,13 @@ router.post("/send", async (req, res) => {
 
       const info = await transporter.sendMail({
         from: `<${email}>`,
-        to: receiver,
-        subject: "", // Make it dynamic
+        to: receiver.join(", "),
+        cc: receiver.join(", "),
+        subject: subject,
         text: message,
       });
 
-      console.log("Message send: ", info.messageId);
+      // console.log("Message send: ", info.messageId);
       // For 1st time message: Store the info.messageId in DB || you can use this for socket id for private ||
       // add this in MessageList(If the user click message, check if they already have info.messageId in DB(if user's email is in DB together with the messagage select email) -> get the info.messageId )
       if (info.messageId) {
@@ -59,13 +68,15 @@ router.post("/send", async (req, res) => {
     main();
   } catch (error) {
     res.status(500).send({ error: error });
-    console.log("ERROR: ", error);
+    // console.log("ERROR: ", error);
   }
 });
 
 router.post("/retrieve", async (req, res) => {
   const result = await RetrieveServices(req.body);
-  res.status(200).send(result);
+  const groupResult = await RetrieveGroupServices(req.body);
+  // console.log("groupResult: ", groupResult.group);
+  res.status(200).send([...result, ...groupResult.group]);
 });
 
 module.exports = router;

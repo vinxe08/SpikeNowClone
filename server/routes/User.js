@@ -7,9 +7,12 @@ const simpleParser = require("mailparser").simpleParser;
 const CreateServices = require("../services/User/Create");
 const RecipientsService = require("../services/User/Retrieve");
 const GetUserService = require("../services/User/GetUser");
+const GroupServices = require("../services/GroupConversation/Retrieve");
 
 router.post("/users", async (req, res) => {
   const { imap_server, imap_port, email, password } = req.body;
+
+  // console.log("REQ.BODY: ", req.body);
 
   // IMAP configuration
   const imap = new Imap({
@@ -23,9 +26,14 @@ router.post("/users", async (req, res) => {
   imap.connect();
 
   imap.once("ready", () => {
-    imap.openBox("INBOX", false, (err, mailbox) => {
+    let allEmail = {
+      email: null,
+      reply: null,
+    };
+
+    // FOR USER's INBOX
+    imap.openBox("INBOX", true, (err, mailbox) => {
       if (err) res.status(500).send({ error: err });
-      // console.log("Mailbox: ", mailbox.messages);
       const fetchOptions = {
         bodies: ["HEADER.FIELDS (FROM TO SUBJECT DATE)", "TEXT"],
         struct: true,
@@ -35,8 +43,6 @@ router.post("/users", async (req, res) => {
         if (searchErr) res.status(500).send({ error: searchErr });
 
         const emailList = [];
-        const messageCount = results.length;
-        let processedCount = 0;
 
         // results.forEach((uid) => {
         const fetch = imap.fetch(results, fetchOptions);
@@ -45,168 +51,267 @@ router.post("/users", async (req, res) => {
 
           msg.on("body", (stream, info) => {
             let buffer = "";
-            // console.log("INFO: ", info);
+
             stream.on("data", (chunk) => {
               buffer += chunk.toString("utf8");
             });
 
             stream.on("end", async () => {
-              // console.log("STREAM: END");
               if (info.which !== "TEXT") {
-                // console.log("STREAM: END-IF");
                 const header = Imap.parseHeader(buffer);
                 data.header = header;
               } else if (info.which === "TEXT") {
-                // console.log("STREAM: END-ELSE");
-                // console.log(buffer.includes("text/html"));
-                // const email = simpleParser(buffer);
-                // const parsedEmail = await email;
-                // if (parsedEmail) {
-                //   data.body = parsedEmail.textAsHtml;
-                // }
-                // // console.log("Buffer: ", buffer);
-                // const substr = buffer.includes("text/html");
-                // substr ? (data.body = buffer) : null;
                 data.body = buffer;
-
-                // simpleParser(buffer, (err, parsed) => {
-                //   if (err) {
-                //     console.log("ERROR", err);
-                //   }
-                //   data.body = parsed.text;
-                // });
               }
             });
-
-            // // !!! This is async: Some Data may not be retrieve
-            // simpleParser(stream, async (err, parsed) => {
-            //   if (err) {
-            //     console.log("ERROR IN PARSER: ", err);
-            //   }
-            //   // const {from, subject, textAsHtml, text} = parsed;
-            //   // console.log("PARSED: ", parsed.headers);
-            //   // console.log("PARSED: ", parsed);
-            //   // emailList.push(parsed);
-            //   /* Make API call to save the data
-            //        Save the retrieved data into a database.
-            //        E.t.c
-            //     */
-            //   if (info.which === "TEXT") {
-            //     data.body = parsed.text;
-            //   } else {
-            //     // const header = Imap.parseHeader(parsed);
-            //     data.header = parsed.headerLines;
-            //   }
-            // });
           });
 
-          // console.log("MSG");
-
-          msg.on("attributes", function (attrs) {
-            const attributes = attrs;
-            // console.log("ATTRS", attributes);
-
-            // const Index = attrs.struct[0].params.boundary;
-            // console.log("ATTR: Index - ", Index);
-            // const regexPattern = `/${Index}\r?\n([\s\S]+?)\r?\n${Index}/`;
-            // const regex = new RegExp(regexPattern);
-            // const match = data.body.match(regex);
-
-            // // TODO: RETURN SHOULD BE CLEAN text/html ONLY
-            // const pattern =
-            //   /Content-Type: text\/html; charset=utf-8[\s\S]+?--[\w-]+?--/;
-            // const matches = email.match(pattern);
-            // console.log("MATCH: ", matches);
-            // if (matches && matches.length > 0) {
-            //   const extractedContent = matches[0];
-            //   // console.log(extractedSentences);
-            //   data.body = extractedContent;
-            // }
-
-            // // console.log("msg: ATTR", startIndex);
-            // // if (startIndex !== -1) {
-            // // var substring = data.body.substring(startIndex); // Extract substring from startIndex to the end
-            // //  console.log(substring);
-            // // } else {
-            // //   console.log("The word 'App' was not found in the paragraph.");
-            // // }
-            // attrs.struct.map((data) => console.log("DATA: ", data[0]?.type));
-            // attrs.struct.filter(
-            //   (data) => data[0]?.type === "text" && data[0]?.subtype === "html"
-            // );
-            //.map((item) => console.log("DATA: ", data));
-            // console.log("DATA: ", data);
-          });
+          msg.on("attributes", function (attrs) {});
 
           msg.on("end", async function () {
-            // const newBodyPromise = simpleParser(data.body);
-            // const newBody = await newBodyPromise;
-            // data.body = newBody.textAsHtml;
-            // if (newBody) {
-            // console.log("NEW BODY");
             emailList.push(data);
-            // processedCount++;
-            // }
-            // emailList.push(data);
           });
         });
 
         fetch.once("end", async () => {
-          // socket.emit('newEmail', emailList);
-          // console.log("FETCH END: ", processedCount, messageCount);
-          // if (processedCount === messageCount) {
-          //   console.log("IF");
-
           const user = await CreateServices(req.body);
-          const parseEmail = async () => {
-            // console.log("1st", emailList);
-            const emails = await Promise.all(
-              emailList.map(async (email) => {
-                // console.log("EMAILS: ", email.header);
-                const body = await simpleParser(email.body);
-                const data = { header: email.header, body: body.text };
-                return data;
-              })
-            );
+          const groups = await GroupServices(req.body);
+          allEmail.email = emailList;
+          // console.log("INBOX: ", allEmail.email);
 
-            return emails;
-            // console.log("EMAILS: ", emails);
-          };
+          // FOR USER's SEND/REPLY
+          imap.openBox("SENT", true, (err, mailbox) => {
+            if (err) res.status(500).send({ error: err });
+            const fetchOptions = {
+              bodies: ["HEADER.FIELDS (FROM TO SUBJECT DATE)", "TEXT"],
+              struct: true,
+            };
 
-          parseEmail()
-            .then((emails) => {
-              res.status(200).send({
-                email: emails,
-                error: user.error,
-                userExist: user.userExist,
+            imap.search(["ALL"], (searchErr, results) => {
+              if (searchErr) res.status(500).send({ error: searchErr });
+
+              const replyList = [];
+
+              const f = imap.fetch(results, fetchOptions);
+              f.on("message", (msg, seqno) => {
+                let reply = { header: "", body: "" };
+
+                msg.on("body", (stream, info) => {
+                  let buffer = "";
+
+                  stream.on("data", (chunk) => {
+                    buffer += chunk.toString("utf8");
+                  });
+
+                  stream.on("end", async () => {
+                    if (info.which !== "TEXT") {
+                      const header = Imap.parseHeader(buffer);
+                      reply.header = header;
+                    } else if (info.which === "TEXT") {
+                      reply.body = buffer;
+                    }
+                  });
+                });
+
+                msg.on("attributes", function (attrs) {});
+
+                msg.on("end", async function () {
+                  replyList.push(reply);
+                });
               });
 
-              imap.end();
-            })
-            .catch((error) => {
-              // console.log(error);
-              res.status(500).send({
-                error: error,
-                message: "ERROR",
+              f.once("end", async () => {
+                allEmail.reply = replyList;
+                // console.log("REPLY: ", replyList);
+                // For the reply, some email dont contain data when using simpleParser, and some has.
+                // TRY LOGIC: if(body.text) -> body.text -> else -> replyList
+
+                // Make this for allEmail.reply also
+                const parseEmail = async () => {
+                  try {
+                    const emailPromises = allEmail.email.map(async (email) => {
+                      const body = await simpleParser(email.body);
+                      let emailBody;
+
+                      if (body.text) {
+                        const originalString = body.text;
+                        const endString = body.headerLines[0].line;
+                        const endIndex = originalString.indexOf(endString);
+                        if (endIndex !== -1) {
+                          const truncatedString = originalString.substring(
+                            0,
+                            endIndex
+                          );
+                          emailBody = truncatedString;
+                        } else {
+                          emailBody = body.text;
+                        }
+                      } else if (body.headerLines.length > 0) {
+                        // console.log("body: ", body);
+                        emailBody = body.headerLines?.[0].line;
+                      }
+
+                      const data = { header: email.header, body: emailBody };
+                      return data;
+                    });
+
+                    const replyPromises = allEmail.reply.map(async (email) => {
+                      const body = await simpleParser(email.body);
+                      // console.log("RAW: ", email);
+                      // console.log("BODY: ", body);
+                      // console.log("RAW: ", email, "BODY: ", body);
+
+                      let emailBody;
+
+                      if (body.text) {
+                        const originalString = body.text;
+                        const endString = body.headerLines[0].line;
+                        const endIndex = originalString.indexOf(endString);
+                        if (endIndex !== -1) {
+                          const truncatedString = originalString.substring(
+                            0,
+                            endIndex
+                          );
+                          emailBody = truncatedString;
+                        } else {
+                          emailBody = body.text;
+                        }
+                      } else if (
+                        body.headerLines.length > 0 &&
+                        body.headerLines?.[0].line !== "<html>"
+                      ) {
+                        // console.log("body: ", body);
+                        emailBody = body.headerLines?.[0].line;
+                      } else {
+                        emailBody = email.body;
+                      }
+
+                      const data = { header: email.header, body: emailBody };
+                      return data;
+                    });
+
+                    const emails = await Promise.all(emailPromises);
+                    const replies = await Promise.all(replyPromises);
+
+                    // console.log("REPLIES: ", replies);
+                    return { emails, replies };
+                  } catch (error) {
+                    throw error;
+                  }
+
+                  // const emails = await Promise.all(
+                  //   allEmail.email.map(async (email) => {
+                  //     const body = await simpleParser(email.body);
+                  //     let emailBody;
+                  //     console.log("BODY: ", body);
+
+                  //     // Used to trim extra details of the email
+                  //     if (body.text) {
+                  //       const originalString = body.text;
+                  //       const endString = body.headerLines[0].line;
+                  //       const endIndex = originalString.indexOf(endString);
+                  //       if (endIndex !== -1) {
+                  //         const truncatedString = originalString.substring(
+                  //           0,
+                  //           endIndex
+                  //         );
+                  //         emailBody = truncatedString;
+                  //       } else {
+                  //         emailBody = body.text;
+                  //       }
+                  //     } else if (body.headerLines.length > 0) {
+                  //       // console.log("body: ", body);
+                  //       emailBody = body.headerLines?.[0].line;
+                  //     }
+
+                  //     const data = { header: email.header, body: emailBody };
+                  //     return data;
+                  //   })
+                  // );
+
+                  // console.log("REPLY: ", allEmail.reply);
+                  // return { inbox: emails, sent: allEmail.reply };
+                };
+
+                parseEmail()
+                  .then(({ emails, replies }) => {
+                    // console.log("REPLYLIST: ", replyList);
+                    // console.log("EMAILS PARSED: ", emails);
+                    // console.log("REPLIES PARSED: ", replies);
+                    res.status(200).send({
+                      email: { inbox: emails, sent: replies },
+                      error: user.error,
+                      userExist: user.userExist,
+                      groups,
+                    });
+
+                    imap.end();
+                  })
+                  .catch((error) => {
+                    // console.log("ERROR 247: ", error);
+                    res.status(500).send({
+                      error: error,
+                      message: "ERROR",
+                    });
+                  });
               });
             });
-          // }
+          });
+          // END
 
-          // imap.end();
+          // const parseEmail = async () => {
+          //   const emails = await Promise.all(
+          //     emailList.map(async (email) => {
+          //       const body = await simpleParser(email.body);
+          //       let emailBody;
+
+          //       // Used to trim extra details of the email
+          //       if (body.text) {
+          //         const originalString = body.text;
+          //         const endString = body.headerLines[0].line;
+          //         const endIndex = originalString.indexOf(endString);
+          //         if (endIndex !== -1) {
+          //           const truncatedString = originalString.substring(
+          //             0,
+          //             endIndex
+          //           );
+          //           emailBody = truncatedString;
+          //         } else {
+          //           emailBody = body.text;
+          //         }
+          //       } else if (body.headerLines.length > 0) {
+          //         console.log("body: ", body);
+          //         emailBody = body.headerLines?.[0].line;
+          //       }
+          //       const data = { header: email.header, body: emailBody };
+          //       return data;
+          //     })
+          //   );
+
+          //   return emails;
+          // };
+
+          // parseEmail()
+          //   .then((emails) => {
+          //     res.status(200).send({
+          //       email: emails,
+          //       error: user.error,
+          //       userExist: user.userExist,
+          //     });
+
+          //     imap.end();
+          //   })
+          //   .catch((error) => {
+          //     console.log("ERROR 247: ", error);
+          //     res.status(500).send({
+          //       error: error,
+          //       message: "ERROR",
+          //     });
+          //   });
         });
-        // });
       });
     });
   });
-
-  // Map all the emailList -> get email.body -> simpleParser(email.body) -> if( simpleParser ) -> rese.send()
-  // const parseEmail = async() => {
-  //   const emailLength = emailList.length
-  //   const emails = emailList.map( async (email) => {
-  //     let parsed = await simpleParser(email.body);
-  //     parsed ?
-  //   })
-  // }
 });
 
 router.post("/getUser", async (req, res) => {
@@ -214,7 +319,7 @@ router.post("/getUser", async (req, res) => {
     const result = await GetUserService(req.body);
     res.status(200).send({ status: true, data: result });
   } catch (error) {
-    console.log("ERROR: ", error);
+    // console.log("ERROR: ", error);
     res.status(500).send({ error });
   }
 });
