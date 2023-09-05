@@ -35,49 +35,52 @@ function MessageContent() {
   }, [state.email]);
 
   // console.log("SORTED: ", sortedArray);
+  // console.log("EMAIL: ", email);
 
   return (
     <ScrollToBottom className="scroll-to-bottom ">
       <div className="MessageContent">
-        {email?.[0]?.body || email?.[1]?.body
-          ? sortedArray
-              .filter((mail) => mail.body)
-              .map((message, index) => (
-                <div
-                  key={index}
-                  className={
-                    state.user.email === message.header.from[0].email
-                      ? "content__section is__user"
-                      : "content__section"
-                  }
-                >
-                  <h1 className="content__timestamp">
-                    <TimeAgo date={message?.header?.date?.[0]} />
-                  </h1>
-                  <div className="content__div">
-                    <div
-                      className={
-                        state.user.email === message.header.from?.[0].email
-                          ? "content__avatar content__user"
-                          : "content__avatar"
-                      }
-                    >
-                      {message.header.from?.[0].email?.[0]}
-                    </div>
-                    <div className="content__body">
-                      <h1 className="content__subject">
-                        {message?.header?.subject?.[0]}
-                      </h1>
-                      {/* <pre className="content__message">{message.body}</pre> */}
-                      <pre
-                        className="content__message"
-                        dangerouslySetInnerHTML={{ __html: message?.body }}
-                      />
-                    </div>
+        {sortedArray &&
+          sortedArray
+            .filter((mail) => mail.body)
+            .map((message, index) => (
+              <div
+                key={index}
+                className={
+                  state.user.email === message.header.from[0].email ||
+                  message.header.from[0] === state.user.email
+                    ? "content__section is__user"
+                    : "content__section"
+                }
+              >
+                <h1 className="content__timestamp">
+                  <TimeAgo date={message?.header?.date?.[0]} />
+                </h1>
+                <div className="content__div">
+                  <div
+                    className={
+                      state.user.email === message.header.from?.[0].email ||
+                      message.header.from[0] === state.user.email
+                        ? "content__avatar content__user"
+                        : "content__avatar"
+                    }
+                  >
+                    {message.header.from?.[0].email?.[0] ||
+                      message.header.from[0][0]}
+                  </div>
+                  <div className="content__body">
+                    <h1 className="content__subject">
+                      {message?.header?.subject?.[0]}
+                    </h1>
+                    {/* <pre className="content__message">{message.body}</pre> */}
+                    <pre
+                      className="content__message"
+                      dangerouslySetInnerHTML={{ __html: message?.body }}
+                    />
                   </div>
                 </div>
-              ))
-          : null}
+              </div>
+            ))}
       </div>
     </ScrollToBottom>
   );

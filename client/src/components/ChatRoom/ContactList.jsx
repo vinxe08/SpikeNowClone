@@ -25,8 +25,9 @@ function ContactList() {
 
   // Groups all email according to email address
   const sortData = emailConcat.reduce((groups, item) => {
+    // console.log("ITEM: ", item);
     const category = item?.header?.from[0]?.email;
-    const receiver = item.header.to[0].email;
+    const receiver = item?.header.to?.[0].email;
     const user = email.user.email;
 
     const isInGroup = Object.values(groups).filter((data) => {
@@ -45,6 +46,7 @@ function ContactList() {
       if (!groups[item.header?.subject?.[0]]) {
         groups[item.header?.subject?.[0]] = [];
         groups[item.header?.subject?.[0]].push(hasGroup);
+        // console.log("HAS GROUP: ", hasGroup);
       }
       groups[item.header?.subject?.[0]].push(item);
     }
@@ -113,11 +115,12 @@ function ContactList() {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            email: email.user.email,
+            user: email.user.email,
           }),
         }
       );
       const data = await response.json();
+      // console.log("CONVERSATION: ", data);
       dispatch(setRecipient(data));
     } catch (error) {
       // DO SOME ERROR ANIMATION!

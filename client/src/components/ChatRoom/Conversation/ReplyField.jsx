@@ -67,61 +67,62 @@ function ReplyField() {
         Swal.showLoading();
       },
     });
-    try {
-      const response = await fetch("http://localhost:3001/conversation/send", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          ...state.user,
-          receiver: receiver,
-          message,
-          subject,
-        }),
-      });
-      const data = await response.json();
+    // // ISSUE: MESSAGES WILL NOT SEND VIA SOCKET IF THE CONVO IS NOT OPEN
+    // try {
+    //   const response = await fetch("http://localhost:3001/conversation/send", {
+    //     method: "POST",
+    //     headers: {
+    //       "Content-Type": "application/json",
+    //     },
+    //     body: JSON.stringify({
+    //       ...state.user,
+    //       receiver: receiver,
+    //       message,
+    //       subject,
+    //     }),
+    //   });
+    //   const data = await response.json();
 
-      if (data) {
-        // NOT WORKING. TRY CHECK THE MESSAGE LIST.
-        // TRY: Use the state.receiver.
-        // console.log("SEND_EMAIL: ", state);
-        await socket.emit("send_email", state.receiver[0]._id, {
-          body: message,
-          header: {
-            date: [formatDateToCustomString(new Date())],
-            from: [state.user.email],
-            subject,
-            to: [receiver],
-          },
-        });
-        dispatch(
-          addEmail({
-            body: message,
-            header: {
-              date: [formatDateToCustomString(new Date())],
-              from: [state.user.email],
-              subject,
-              to: [receiver],
-            },
-          })
-        );
-        setMessage("");
-        Swal.close();
-        Toast.fire({
-          icon: "success",
-          title: "Message sent",
-        });
-      }
-    } catch (error) {
-      console.log("CATCH: ", error);
-      Swal.close();
-      Toast.fire({
-        icon: "error",
-        title: "Something is wrong. Try Again",
-      });
-      setMessage("");
-    }
+    //   if (data) {
+    // NOT WORKING. TRY CHECK THE MESSAGE LIST.
+    // TRY: Use the state.receiver.
+    // console.log("SEND_EMAIL: ", state);
+    await socket.emit("send_email", state.receiver[0]._id, {
+      body: message,
+      header: {
+        date: [formatDateToCustomString(new Date())],
+        from: [state.user.email],
+        subject,
+        to: [receiver],
+      },
+    });
+    dispatch(
+      addEmail({
+        body: message,
+        header: {
+          date: [formatDateToCustomString(new Date())],
+          from: [state.user.email],
+          subject,
+          to: [receiver],
+        },
+      })
+    );
+    setMessage("");
+    Swal.close();
+    Toast.fire({
+      icon: "success",
+      title: "Message sent",
+    });
+    //   }
+    // } catch (error) {
+    //   console.log("CATCH: ", error);
+    //   Swal.close();
+    //   Toast.fire({
+    //     icon: "error",
+    //     title: "Something is wrong. Try Again",
+    //   });
+    //   setMessage("");
+    // }
   };
 
   useEffect(() => {

@@ -11,6 +11,18 @@
   min-width: 20rem;
 }
 
+.main__loading {
+  height: 85vh;
+  display: flex;
+
+  justify-content: center;
+  align-items: center;
+}
+
+.loading__list {
+  transform: scale(2);
+}
+
 .Message__List {
   height: 85vh;
   overflow-y: auto;

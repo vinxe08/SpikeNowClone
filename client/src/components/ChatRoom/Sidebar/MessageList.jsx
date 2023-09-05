@@ -25,11 +25,6 @@ function MessageList({ email }) {
     email[0]?.header.from[0]?.name !== emailState.user.email &&
     email[0]?.header?.from[0] !== emailState.user.email;
 
-  const ifNotUser =
-    email[0]?.header.to[0]?.name ||
-    email[0]?.header.to[0]?.email ||
-    email[0]?.header?.to[0];
-
   const truncate = (paragraph, maxLength) => {
     if (paragraph?.length <= maxLength) {
       return paragraph; // No truncation needed
@@ -39,11 +34,14 @@ function MessageList({ email }) {
 
   // Displays Conversation
   const dispatchEmail = async () => {
+    // console.log("EMAIL: ", email);
+    // console.log("emailState: ", emailState); // recipients are not the same
     dispatch(getEmail(email)); // Dispatch the email and display
     dispatch(setToggle("single"));
 
     // Check if it is group email and has an id
     if (email[0]?.data?._id) {
+      // console.log("IF select_conversation: ", email[0]?.data?._id);
       socket.emit("select_conversation", email[0]?.data?._id);
       dispatch(
         setReciever([
@@ -54,6 +52,7 @@ function MessageList({ email }) {
         ])
       );
     } else {
+      // RECIPIENTS IS ALREADY FOR USER. -> TRY: USE THE RECIPIENT ONLY NOT THE USER
       const recipients = emailState.recipients.filter(
         (recipient) =>
           recipient.users.includes(
@@ -64,13 +63,40 @@ function MessageList({ email }) {
           )
       );
 
+      const userRecipient = emailState.recipients.filter(
+        (recipient) =>
+          recipient.users.includes(emailState.user.email) &&
+          recipient.users.includes(
+            email[0].header.to[0].email || email[0].header.to[0]
+          )
+      );
+      console.log("ELSE select_conversation: ", recipients, userRecipient);
+
+      // --------------------------- ISSUE ---------------------------
+      // ISSUE: Not specifically for its own message.
+      // TRY: Find another solution for that is unique but the same id with sender for each message
+      // SOLUTION 1: TRY TO MODIFY AND ADD THE SENDER THE EMAIL IN CONTACT LIST. -> NOT WORKING BEC. IT WILL BE UNIQUE IN SENDER & CALLER -> CATN USE AS A ROOM ID
       if (recipients.length > 0) {
-        // console.log("IF: ", recipients[0]?._id);
+        // console.log(
+        //   "ELSE IF select_conversation: ",
+        //   recipients[0]?._id,
+        //   recipients
+        // );
+        console.log("IF: ", recipients[0]?._id);
         dispatch(setReciever(recipients));
         // Socket.io
-        socket.emit("select_conversation", recipients[0]?._id);
+        socket.emit("select_conversation", recipients[0]?._id); // ERROR: recipient may be to many. id !== room id
+      } else if (userRecipient) {
+        console.log("IF: ", userRecipient[0]?._id);
+        dispatch(setReciever(userRecipient));
+        socket.emit("select_conversation", userRecipient[0]?._id);
       } else {
         // console.log("ELSE: ", recipients[0]?._id);
+        // console.log(
+        //   "ELSE ELSE select_conversation: ",
+        //   recipients[0]?._id,
+        //   recipients
+        // );
         // CREATE CONVERSATION
         try {
           const response = await fetch(
@@ -88,7 +114,7 @@ function MessageList({ email }) {
             }
           );
           const result = await response.json();
-          // console.log("MessageList: TRY");
+          console.log("MessageList: TRY", result.response.data._id);
           socket.emit("select_conversation", result.response.data._id);
         } catch (error) {
           console.log("MessageList: error ", error);
@@ -129,9 +155,9 @@ function MessageList({ email }) {
           <h1 className="subject">
             {truncate(
               messageNotFromUser
-                ? email[0]?.header.from[0].email
-                : email[0]?.header.to[0].email
-                ? email[0]?.header.to[0].email
+                ? email?.[0]?.header.from?.[0].email
+                : email?.[0]?.header.to?.[0].email
+                ? email?.[0]?.header.to?.[0].email
                 : hasType[0].header.subject[0].replace(
                     `: ${hasType[0].data._id}`,
                     ""
@@ -143,7 +169,7 @@ function MessageList({ email }) {
         </div>
         <h1 className="messages">
           {truncate(
-            email[0]?.body || email.filter((item) => item.body)[0].body,
+            email[0]?.body || email.filter((item) => item.body)[0]?.body,
             40
           )}
         </h1>

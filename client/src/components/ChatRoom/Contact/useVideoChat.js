@@ -34,8 +34,9 @@ export function useVideoChat() {
           userVideo.current.srcObject = stream;
         }
 
+        console.log("RECIPIENTS", recipient);
         // REGISTER IN SERVER - USER TO RECEIVER
-        socketRef.current.emit("join room", { roomID: recipient[0]._id, user });
+        socketRef.current.emit("join room", { roomID: recipient[0]._id, user }); // RECIPIENT IS NOT FOR SPECIFIC ID FOR EMAIL/CONTACT
 
         // POV: RECEIVER
         socketRef.current.on("all users", (users) => {
@@ -78,15 +79,20 @@ export function useVideoChat() {
         socketRef.current.on("user left", (id) => {
           const peerObj = peersRef.current.find((p) => p.peerID === id);
           // TRY TO ADD A DESTTROY FUNCTION.
-          if (peerObj) {
-            peerObj.peer.on("error", (err) => {
-              console.log("USER LEFT ERROR: ", err);
-            });
-            peerObj.peer.destroy();
-            peerObj.peer.on("error", (err) => {
-              console.log("USER LEFT ERROR: ", err);
-            });
-          }
+          // if (peerObj.peer) {
+          //   peerObj.peer.on("error", (err) => {
+          //     console.log("USER LEFT ERROR: ", err);
+          //   });
+          //   peerObj.peer.destroy();
+          //   peerObj.peer.on("error", (err) => {
+          //     console.log("USER LEFT ERROR: ", err);
+          //   });
+          // }
+
+          // if (typeof process !== "undefined") {
+          //   peerObj.peer.destroy();
+          //   console.log("PEER 1 DESTROY");
+          // }
           console.log("PEER OBJ: ", peerObj);
           const peers = peersRef.current.filter((p) => p.peerID !== id);
           peersRef.current = peers;
@@ -148,7 +154,13 @@ export function useVideoChat() {
     if (userVideo.current) {
       userVideo.current.srcObject.getTracks().forEach((track) => track.stop());
       dispatch(setIsCalling(false));
+      // peers.map((peer) => peer.destroy());
     }
+
+    // if (typeof process !== "undefined") {
+    //   peers.map((peer) => peer.destroy());
+    //   console.log("PEER DESTROY 2");
+    // }
   };
 
   return {

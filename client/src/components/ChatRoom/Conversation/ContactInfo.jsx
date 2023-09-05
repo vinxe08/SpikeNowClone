@@ -12,6 +12,8 @@ function ContactInfo() {
   const dispatch = useDispatch();
   const hasType = state.email.filter((item) => item.header.type);
 
+  // console.log("STATE : ", state.email);
+
   return (
     <div className="ContactInfo">
       <div className="arrow__back">

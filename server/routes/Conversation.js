@@ -28,6 +28,8 @@ router.post("/send", async (req, res) => {
     subject,
   } = req.body;
 
+  console.log("receiver", receiver);
+
   try {
     const main = async () => {
       const transporter = nodeMailer.createTransport({
@@ -42,8 +44,8 @@ router.post("/send", async (req, res) => {
 
       const info = await transporter.sendMail({
         from: `<${email}>`,
-        to: receiver.join(", "),
-        cc: receiver.join(", "),
+        to: Array.isArray(receiver) ? receiver.join(", ") : receiver,
+        cc: Array.isArray(receiver) ? receiver.join(", ") : receiver,
         subject: subject,
         text: message,
       });
@@ -75,7 +77,6 @@ router.post("/send", async (req, res) => {
 router.post("/retrieve", async (req, res) => {
   const result = await RetrieveServices(req.body);
   const groupResult = await RetrieveGroupServices(req.body);
-  // console.log("groupResult: ", groupResult.group);
   res.status(200).send([...result, ...groupResult.group]);
 });
 

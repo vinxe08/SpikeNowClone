@@ -20,10 +20,12 @@ function GroupList() {
   const modal = useSelector((state) => state.menuReducer.modalCreate);
   const [results, setResults] = useState(null);
   const dispatch = useDispatch();
-  const emailState = useSelector((state) => state.emailReducer);
+  const state = useSelector((state) => state.emailReducer);
+  const [emailState, setEmailState] = useState(state);
   const { socket } = useOutletContext();
 
   // console.log("EMAIL STATE: ", emailState);
+
   // TODO: Display all the Group that the user is in.
   // REMOVE THIS. GET THE DATA FROM ChatRoom.jsx(data.groups)
   // const fetchAllGroups = async () => {
@@ -47,11 +49,16 @@ function GroupList() {
     emailState.groupEmail.map((item) => `${item.groupName}: ${item._id}`)
   );
 
+  // console.log("GROUP SET: ", groupSet);
+
+  // Returns all the email that has group
   const emailSet = emailState.allEmail.filter(
     (item) =>
       item.header.subject &&
       item.header.subject.some((subject) => groupSet.has(subject))
   );
+
+  // console.log("EMAIL SET", emailSet);
 
   const groupedEmail = emailSet.map((data) => {
     const [groupName, id] = data.header.subject[0].split(": ");
@@ -65,9 +72,35 @@ function GroupList() {
     };
   });
 
+  const noEmail = emailState.groupEmail.map((data) => {
+    // console.log("MAP: ", data);
+    const samp = groupedEmail.filter((item) => item.data._id === data._id);
+
+    if (samp.length > 0) {
+      // console.log("IF: ", samp);
+      return samp[0];
+    } else {
+      const recipient = data.users.filter(
+        (name) => name !== emailState.user.email
+      );
+      const to = recipient.join(", ");
+      // console.log("ELSE: ", to);
+      return {
+        data,
+        header: {
+          from: [{ email: emailState.user.email }],
+          date: [data.timestamp],
+          subject: [`${data.groupName}: ${data._id}`],
+          to: [{ email: `${to}` }],
+          type: "group",
+        },
+      };
+    }
+  });
+
   const onMessageSelect = (email) => {
     dispatch(setToggle("group"));
-    console.log("ON SELECT: ", email);
+    // console.log("ON SELECT: ", email);
     dispatch(
       setReciever([
         {
@@ -84,9 +117,10 @@ function GroupList() {
     socket.emit("select_conversation", email.data._id);
   };
 
-  // useEffect(() => {
-  //   fetchAllGroups();
-  // }, [modal]);
+  useEffect(() => {
+    setEmailState(state);
+    // console.log("USE EFFECT");
+  }, [modal]);
 
   // useEffect(() => {
   //   fetchAllGroups();
@@ -100,10 +134,10 @@ function GroupList() {
         </div>
         <h1 className="group__icontext">Create Group</h1>
       </div>
-      {groupedEmail.length > 0 && (
+      {noEmail.length > 0 && (
         <div>
           <h1 className="group__divider">RECENT</h1>
-          {groupedEmail.map((result) => (
+          {noEmail.map((result) => (
             <div
               onClick={() => onMessageSelect(result)}
               key={result.header.date[0]}

@@ -42,12 +42,13 @@ const socketToRoom = {};
 
 io.on("connection", (socket) => {
   socket.on("select_conversation", (id) => {
+    console.log("select_conversation: ", id);
     socket.join(id);
     socket.emit("previous_video_requests", roomData[id] || []);
   });
 
   socket.on("send_email", (id, data) => {
-    socket.to(id).emit("receive_email", data);
+    socket.broadcast.to(id).emit("receive_email", data);
   });
 
   // NEW
@@ -177,7 +178,7 @@ io.on("connection", (socket) => {
       room = room.filter((id) => id.userID !== socket.id);
       users[roomID] = room;
     }
-    console.log("DISCONNECT", users[roomID], users);
+    // console.log("DISCONNECT", users[roomID], users);
 
     socket.broadcast.emit("user left", socket.id);
   });

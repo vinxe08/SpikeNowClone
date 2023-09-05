@@ -25,6 +25,7 @@ import Notification from "./Contact/Notification";
 import GroupList from "./Sidebar/GroupList";
 import Modal from "./Modal";
 import GroupConversation from "./GroupEmail/GroupConversation";
+import FadeLoader from "react-spinners/FadeLoader";
 
 function ChatRoom() {
   const state = useSelector((state) => state.emailReducer);
@@ -35,45 +36,50 @@ function ChatRoom() {
   const caller = useSelector((state) => state.showReducer.caller);
   const menu = useSelector((state) => state.menuReducer.menu);
   const modal = useSelector((state) => state.menuReducer.modalCreate);
+  const [loading, setLoading] = useState(false);
+  // console.log("CHAT ROOM");
+  const fetchUserInfo = async () => {
+    setLoading(true);
+    try {
+      // Fetch the User's Information and all Email.
+      const response = await fetch("http://localhost:3001/api/users", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(state.user),
+      });
+      const data = await response.json();
+      // console.log("DATA: ", data);
 
-  useEffect(() => {
-    const fetchUserInfo = async () => {
-      try {
-        // Fetch the User's Information and all Email.
-        const response = await fetch("http://localhost:3001/api/users", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(state.user),
-        });
-        const data = await response.json();
-        // console.log("DATA: ", data);
-
-        if (!data.userExists && !data.error) {
-          dispatch(getAllEmail(data.email));
-          dispatch(setGroupEmail(data.groups.group));
-          Swal.close();
-          navigate("/");
-        } else {
-          Swal.close();
-          Toast.fire({
-            icon: "error",
-            title: "Wrong credentials. Try Again",
-          });
-        }
-      } catch (error) {
-        console.log("ERROR: ", error);
+      if (!data.userExists && !data.error) {
+        dispatch(getAllEmail(data.email));
+        dispatch(setGroupEmail(data.groups.group));
+        Swal.close();
+        navigate("/");
+        setLoading(false);
+      } else {
         Swal.close();
         Toast.fire({
           icon: "error",
-          title: "Error. Try Again Later",
+          title: "Wrong credentials. Try Again",
         });
+        setLoading(false);
       }
-    };
+    } catch (error) {
+      console.log("ERROR: ", error);
+      Swal.close();
+      Toast.fire({
+        icon: "error",
+        title: "Error. Try Again Later",
+      });
+      setLoading(false);
+    }
+  };
 
+  useEffect(() => {
     fetchUserInfo();
-  }, []);
+  }, [modal]);
 
   useEffect(() => {
     if (!state.user) {
@@ -100,20 +106,29 @@ function ChatRoom() {
     });
   }, [socket]);
 
+  // TODO 1: In Contact Info -> the emails/messages must only contains the recipient's emails/messages
+  // TODO 2: The Contact Info close button(Not in video/voice call page).
+
   return (
     <div className="ChatRoom">
       {/* SIDE BAR */}
+
       <div className="SideBar">
-        {menu === "Home" ? (
-          <>
-            <UserSection />
-            <ContactList />
-          </>
+        <UserSection />
+        {loading ? (
+          <div className="main__loading">
+            <div className="loading__list">
+              <FadeLoader
+                color="#1E90FF"
+                loading={true}
+                size={100}
+                aria-label="Loading Spinner"
+                data-testid="loader"
+              />
+            </div>
+          </div>
         ) : (
-          <>
-            <UserSection />
-            <GroupList />
-          </>
+          <>{menu === "Home" ? <ContactList /> : <GroupList />}</>
         )}
         <MenuBar />
       </div>

@@ -28,21 +28,21 @@ module.exports = async (data) => {
   //   return [];
   // }
   try {
-    // console.log("CREATE TRY: ", data);
+    console.log("CREATE TRY: ", data);
     const usersExist = await Conversation.findOne({
       users: { $all: [email, receiver] },
     });
     if (usersExist) {
-      // console.log("CREATE TRY-IF: ", data);
+      console.log("CREATE TRY-IF: ", data);
       return { userExist: true, error: false, data: usersExist };
     } else {
-      // console.log("CREATE TRY-ELSE: ", data);
+      console.log("CREATE TRY-ELSE: ", data);
       const response = await Conversation.insertMany({
         users: [email, receiver],
       }); // need to return the data that created
 
       if (response) {
-        // console.log("CREATE RESPONSE: ", data);
+        console.log("CREATE RESPONSE: ", data);
         const userExist = await Conversation.findOne({
           users: { $all: [email, receiver] },
         });

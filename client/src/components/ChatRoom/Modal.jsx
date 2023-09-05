@@ -7,6 +7,7 @@ import "./Modal.css";
 import { IoIosArrowDown } from "react-icons/io";
 import { FaLocationArrow } from "react-icons/fa";
 import CreatableSelect from "react-select/creatable";
+import { pushGroupEmail } from "../../features/email/emailSlice";
 
 function Modal() {
   const dispatch = useDispatch();
@@ -114,8 +115,21 @@ function Modal() {
       // Close modal
       if (data) {
         dispatch(setModal(false));
+        dispatch(
+          pushGroupEmail({
+            users: filteredValue,
+            groupName: groupInfo.groupName,
+            description: groupInfo.description,
+            background: `${getRandomString()}`,
+            timestamp: formatDateToCustomString(date),
+            _id: groupInfo.groupName,
+          })
+        );
+        console.log("SUCCES: ", data);
       }
-    } catch (error) {}
+    } catch (error) {
+      console.log("ERROR CREATE GROUP: ", error);
+    }
     // add Loading
     // send in db (value)
     // display the group name in sidebar

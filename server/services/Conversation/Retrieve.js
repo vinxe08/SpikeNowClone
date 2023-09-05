@@ -8,7 +8,7 @@ module.exports = async (data) => {
     });
 
     if (conversations) {
-      // console.log("RETRIEVE: tryIF");
+      console.log("RETRIEVE: tryIF", conversations, user);
 
       return conversations;
     } else {

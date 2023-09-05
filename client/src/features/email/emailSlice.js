@@ -83,6 +83,9 @@ export const emailSlice = createSlice({
     setGroupEmail: (state, action) => {
       state.groupEmail = action.payload;
     },
+    pushGroupEmail: (state, action) => {
+      state.groupEmail.push(action.payload);
+    },
     setToggle: (state, action) => {
       state.toggle = action.payload;
     },
@@ -101,6 +104,7 @@ export const {
   setGroupEmail,
   setToggle,
   setReciever,
+  pushGroupEmail,
 } = emailSlice.actions;
 
 export default emailSlice.reducer;
