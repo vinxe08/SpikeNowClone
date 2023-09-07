@@ -5,6 +5,7 @@ import { useDispatch, useSelector } from "react-redux";
 import {
   getEmail,
   setReciever,
+  setRecipient,
   setToggle,
 } from "../../../features/email/emailSlice";
 import { useOutletContext } from "react-router-dom";
@@ -34,6 +35,8 @@ function MessageList({ email }) {
 
   // Displays Conversation
   const dispatchEmail = async () => {
+    // ISSUE!!!: if it is for group, VIDEO/VOICE call not working
+
     // console.log("EMAIL: ", email);
     // console.log("emailState: ", emailState); // recipients are not the same
     dispatch(getEmail(email)); // Dispatch the email and display
@@ -41,10 +44,19 @@ function MessageList({ email }) {
 
     // Check if it is group email and has an id
     if (email[0]?.data?._id) {
-      // console.log("IF select_conversation: ", email[0]?.data?._id);
+      console.log("IF select_conversation: ", email[0]?.data?._id);
       socket.emit("select_conversation", email[0]?.data?._id);
       dispatch(
         setReciever([
+          {
+            _id: email[0]?.data?._id,
+            users: [email[0].header.from[0].email, email[0].header.to[0].email],
+          },
+        ])
+      );
+      // ADDITIONAL
+      dispatch(
+        setRecipient([
           {
             _id: email[0]?.data?._id,
             users: [email[0].header.from[0].email, email[0].header.to[0].email],
@@ -86,17 +98,12 @@ function MessageList({ email }) {
         dispatch(setReciever(recipients));
         // Socket.io
         socket.emit("select_conversation", recipients[0]?._id); // ERROR: recipient may be to many. id !== room id
-      } else if (userRecipient) {
-        console.log("IF: ", userRecipient[0]?._id);
+      } else if (userRecipient.length > 0) {
+        console.log("ELSE IF: ", userRecipient[0]?._id);
+        dispatch(setRecipient(userRecipient));
         dispatch(setReciever(userRecipient));
         socket.emit("select_conversation", userRecipient[0]?._id);
       } else {
-        // console.log("ELSE: ", recipients[0]?._id);
-        // console.log(
-        //   "ELSE ELSE select_conversation: ",
-        //   recipients[0]?._id,
-        //   recipients
-        // );
         // CREATE CONVERSATION
         try {
           const response = await fetch(
@@ -114,8 +121,12 @@ function MessageList({ email }) {
             }
           );
           const result = await response.json();
-          console.log("MessageList: TRY", result.response.data._id);
-          socket.emit("select_conversation", result.response.data._id);
+          console.log("MessageList: TRY", result.response.data);
+          if (result) {
+            dispatch(setRecipient([result.response.data]));
+            dispatch(setReciever([result.response.data]));
+            socket.emit("select_conversation", result.response.data._id);
+          }
         } catch (error) {
           console.log("MessageList: error ", error);
         }
@@ -163,7 +174,7 @@ function MessageList({ email }) {
                     ""
                   ),
               40
-            )}
+            )}{" "}
           </h1>
           {/* <h1 className="message__count">99</h1> */}
         </div>

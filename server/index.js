@@ -48,7 +48,8 @@ io.on("connection", (socket) => {
   });
 
   socket.on("send_email", (id, data) => {
-    socket.broadcast.to(id).emit("receive_email", data);
+    console.log("SEND EMAIL: ", id, data);
+    socket.to(id).emit("receive_email", data);
   });
 
   // NEW

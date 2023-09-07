@@ -3,6 +3,7 @@ import { useDispatch, useSelector } from "react-redux";
 import Peer from "simple-peer";
 import io from "socket.io-client";
 import { setIsCalling } from "../../../features/show/showSlice";
+import { setMediaStream } from "../../../features/stream/mediaStream";
 
 export function useVideoChat() {
   const dispatch = useDispatch();
@@ -13,30 +14,40 @@ export function useVideoChat() {
 
   const user = useSelector((state) => state.emailReducer.user.email);
   const state = useSelector((state) => state.emailReducer.email);
-  const allRecipients = useSelector((state) => state.emailReducer.recipients);
+  const recipient = useSelector((state) => state.emailReducer.recipients);
+  // const [recipient, setRecipient] = useState();
 
-  const recipient = allRecipients?.filter(
-    (data) =>
-      data.users.includes(
-        state?.[0].header.from?.[0]?.email || state?.[0].header.from?.[0]
-      ) &&
-      data.users.includes(
-        state?.[0].header.to?.[0]?.email || state?.[0].header.to?.[0]
-      )
-  );
+  // const selectedRecipient = allRecipients?.filter(
+  //   (data) =>
+  //     data.users.includes(
+  //       state?.[0].header.from?.[0]?.email || state?.[0].header.from?.[0]
+  //     ) &&
+  //     data.users.includes(
+  //       state?.[0].header.to?.[0]?.email || state?.[0].header.to?.[0]
+  //     )
+  // );
 
   useEffect(() => {
+    window.addEventListener("beforeunload", leaveCall);
+
     socketRef.current = io.connect("http://localhost:3001");
     navigator.mediaDevices
       .getUserMedia({ video: true, audio: true })
       .then((stream) => {
         if (userVideo.current) {
           userVideo.current.srcObject = stream;
+          // SEND THIS STREAM IN CHAT ROOM FOR track.stop()
+          // dispatch(setMediaStream(stream));
         }
-
+        // dispatch(setMediaStream({ stream }));
         console.log("RECIPIENTS", recipient);
         // REGISTER IN SERVER - USER TO RECEIVER
-        socketRef.current.emit("join room", { roomID: recipient[0]._id, user }); // RECIPIENT IS NOT FOR SPECIFIC ID FOR EMAIL/CONTACT
+        // if (recipient) {
+        socketRef.current.emit("join room", {
+          roomID: recipient[0]._id,
+          user,
+        }); // RECIPIENT IS NOT FOR SPECIFIC ID FOR EMAIL/CONTACT
+        // }
 
         // POV: RECEIVER
         socketRef.current.on("all users", (users) => {
@@ -78,21 +89,11 @@ export function useVideoChat() {
 
         socketRef.current.on("user left", (id) => {
           const peerObj = peersRef.current.find((p) => p.peerID === id);
-          // TRY TO ADD A DESTTROY FUNCTION.
-          // if (peerObj.peer) {
-          //   peerObj.peer.on("error", (err) => {
-          //     console.log("USER LEFT ERROR: ", err);
-          //   });
-          //   peerObj.peer.destroy();
-          //   peerObj.peer.on("error", (err) => {
-          //     console.log("USER LEFT ERROR: ", err);
-          //   });
-          // }
 
-          // if (typeof process !== "undefined") {
-          //   peerObj.peer.destroy();
-          //   console.log("PEER 1 DESTROY");
-          // }
+          if (peerObj) {
+            peerObj.peer.destroy();
+            console.log("PEER 1 DESTROY");
+          }
           console.log("PEER OBJ: ", peerObj);
           const peers = peersRef.current.filter((p) => p.peerID !== id);
           peersRef.current = peers;
@@ -100,6 +101,28 @@ export function useVideoChat() {
         });
       })
       .catch((error) => console.log("ERROR: ", error)); // Add an Error animation
+
+    const userVideoRef = userVideo.current;
+
+    return () => {
+      // if (userVideo.current) {
+      //   userVideo.current.srcObject.getTracks().forEach((track) => track.stop());
+      //   dispatch(setIsCalling(false));
+      // }
+
+      if (userVideoRef) {
+        const stream = userVideoRef.srcObject;
+        if (stream) {
+          // Stop the media stream
+          const tracks = stream.getTracks();
+          tracks.forEach((track) => track.stop());
+        }
+        // userVideo.current.srcObject = null;
+        userVideoRef.srcObject = null;
+      }
+
+      window.removeEventListener("beforeunload", leaveCall);
+    };
   }, []);
 
   function createPeer(userToSignal, callerID, stream) {
@@ -154,13 +177,7 @@ export function useVideoChat() {
     if (userVideo.current) {
       userVideo.current.srcObject.getTracks().forEach((track) => track.stop());
       dispatch(setIsCalling(false));
-      // peers.map((peer) => peer.destroy());
     }
-
-    // if (typeof process !== "undefined") {
-    //   peers.map((peer) => peer.destroy());
-    //   console.log("PEER DESTROY 2");
-    // }
   };
 
   return {

@@ -12,7 +12,9 @@ const Video = ({ video }) => {
 
   useEffect(() => {
     video.peer.on("stream", (stream) => {
-      ref.current.srcObject = stream;
+      if (ref.current) {
+        ref.current.srcObject = stream;
+      }
     });
   }, [video]);
 
@@ -33,7 +35,7 @@ function VideoCallPage() {
 
   const { userVideo, peers, leaveCall } = useVideoChat();
 
-  console.log("PEERS:", peers);
+  // console.log("PEERS:", peers);
   // useEffect(() => {
   //   socket.on("end_call", () => {
   //     dispatch(setIsCalling(false));

@@ -2,31 +2,6 @@ const Conversation = require("../../models/Conversation");
 
 module.exports = async (data) => {
   const { email, receiver } = data;
-  // try {
-  //   const usersExist = await Conversation.find({
-  //     $or: [
-  //       {
-  //         "users.user.username": user,
-  //         "users.recipient.username": recipient,
-  //       },
-  //       {
-  //         "users.user.username": recipient,
-  //         "users.recipient.username": user,
-  //       },
-  //     ],
-  //   });
-
-  //   if (usersExist.length > 0) {
-  //     return usersExist;
-  //   } else {
-  //     const response = await Conversation.insertMany({
-  //       users: [{ user, recipient }],
-  //     });
-  //     return response;
-  //   }
-  // } catch (error) {
-  //   return [];
-  // }
   try {
     console.log("CREATE TRY: ", data);
     const usersExist = await Conversation.findOne({

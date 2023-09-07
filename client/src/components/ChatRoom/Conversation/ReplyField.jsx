@@ -86,7 +86,7 @@ function ReplyField() {
     //   if (data) {
     // NOT WORKING. TRY CHECK THE MESSAGE LIST.
     // TRY: Use the state.receiver.
-    // console.log("SEND_EMAIL: ", state);
+    console.log("SEND_EMAIL: ", state);
     await socket.emit("send_email", state.receiver[0]._id, {
       body: message,
       header: {

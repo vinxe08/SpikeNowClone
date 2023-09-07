@@ -26,6 +26,8 @@ import GroupList from "./Sidebar/GroupList";
 import Modal from "./Modal";
 import GroupConversation from "./GroupEmail/GroupConversation";
 import FadeLoader from "react-spinners/FadeLoader";
+import { stopMediaStream } from "../../features/stream/mediaStream";
+// import { useVideoChat } from "./Contact/useVideoChat";
 
 function ChatRoom() {
   const state = useSelector((state) => state.emailReducer);
@@ -37,6 +39,8 @@ function ChatRoom() {
   const menu = useSelector((state) => state.menuReducer.menu);
   const modal = useSelector((state) => state.menuReducer.modalCreate);
   const [loading, setLoading] = useState(false);
+
+  // const { leaveCall } = useVideoChat();
   // console.log("CHAT ROOM");
   const fetchUserInfo = async () => {
     setLoading(true);
@@ -74,6 +78,7 @@ function ChatRoom() {
         title: "Error. Try Again Later",
       });
       setLoading(false);
+      // window.location.reload();
     }
   };
 
@@ -90,6 +95,7 @@ function ChatRoom() {
     dispatch(setCaller(null));
     dispatch(setIsCalling(false));
     dispatch(setToggle(null));
+    // dispatch(stopMediaStream());
 
     socket.on("previous_video_requests", (data) => {
       if (data) {
@@ -108,11 +114,14 @@ function ChatRoom() {
 
   // TODO 1: In Contact Info -> the emails/messages must only contains the recipient's emails/messages
   // TODO 2: The Contact Info close button(Not in video/voice call page).
+  // TODO 3: Uncomment the "sendEmail" function in reply field
+  // TODO 4: Clean all unnecessary components, comments, codes that is not used.
+  // TODO 5: In ChatRoom
+  // FINAL TODO: Do a full run, but delete all data first in DB.
 
   return (
     <div className="ChatRoom">
       {/* SIDE BAR */}
-
       <div className="SideBar">
         <UserSection />
         {loading ? (
@@ -146,16 +155,6 @@ function ChatRoom() {
       {isActive ? <Contact /> : null}
       {caller && <Notification caller={caller} />}
       {modal ? <Modal /> : null}
-      {/* 
-        NEXT: CREATE A PAGE FOR GROUP MESSAGE | Use NodeMailer for sending & Use DB for storing to display. 
-        1 -> Create the UI for the Group Message 
-        2 -> Create a page like for messaging(2 users)
-        3 -> Message will send via NodeMailer & save in DB
-        4 -> Display in UI with Realtime-alike
-        5 -> Display the group in ChatRoom->ContactList and also in GroupList
-
-        TODO: Get the SENT inbox using IMAP. e.g "imap.openBox("INBOX",...)"
-      */}
     </div>
   );
 }

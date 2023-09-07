@@ -19,12 +19,15 @@ function Contact() {
   const { socket } = useOutletContext();
   const state = useSelector((state) => state.emailReducer.email);
   const recipients = useSelector((state) => state.emailReducer.recipients);
+  const emailReducer = useSelector((state) => state.emailReducer);
   const isCalling = useSelector((state) => state.showReducer.isCalling);
   const type = useSelector((state) => state.showReducer.type);
+  console.log("emailReducer: ", emailReducer);
+  const [recipient, setRecipient] = useState();
 
   const [sendCall, setSendCall] = useState(null);
   // Room ID - Try to add another logic in order to get the email from type:"GROUP"
-  const recipient = recipients?.filter(
+  const selectedRecipient = recipients?.filter(
     (data) =>
       data.users.includes(
         state?.[0].header.from?.[0]?.email || state?.[0].header.from?.[0]
@@ -34,9 +37,17 @@ function Contact() {
       )
   );
 
+  useEffect(() => {
+    if (selectedRecipient.length > 0) {
+      setRecipient(selectedRecipient);
+    } else {
+      setRecipient(recipients);
+    }
+  }, [recipients]);
+
   // console.log("STATE: ", state);
   // console.log("ALL recipient", recipients);
-  // console.log("ONE recipient: ", recipient); // NO RECIPIENTS FOR GROUP
+  console.log("ONE recipient: ", recipient); // NO RECIPIENTS FOR GROUP
 
   // For shorten and add ellipsis at the last part of the paragraph
   const truncate = (paragraph, maxLength) => {
@@ -53,6 +64,7 @@ function Contact() {
   const callUser = (type) => {
     dispatch(setIsCalling(true));
 
+    console.log("CONTACT: ", recipient);
     if (type === "Video Call") {
       setSendCall({
         id: recipient[0]._id, // ERROR: No ._id

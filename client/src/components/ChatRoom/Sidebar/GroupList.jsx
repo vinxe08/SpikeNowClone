@@ -11,6 +11,7 @@ import { setModal } from "../../../features/navigate/menuSlice";
 import {
   getEmail,
   setReciever,
+  setRecipient,
   setToggle,
 } from "../../../features/email/emailSlice";
 import { useOutletContext } from "react-router-dom";
@@ -100,9 +101,18 @@ function GroupList() {
 
   const onMessageSelect = (email) => {
     dispatch(setToggle("group"));
-    // console.log("ON SELECT: ", email);
+    console.log("ON SELECT: ", email);
     dispatch(
       setReciever([
+        {
+          groupName: email.data.groupName,
+          users: email.data.users,
+          _id: email.data._id,
+        },
+      ])
+    );
+    dispatch(
+      setRecipient([
         {
           groupName: email.data.groupName,
           users: email.data.users,
