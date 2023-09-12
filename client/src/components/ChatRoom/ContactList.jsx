@@ -1,12 +1,15 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
+import { useOutletContext } from "react-router-dom";
 import FadeLoader from "react-spinners/FadeLoader";
-import { setRecipient } from "../../features/email/emailSlice";
+import { addEmail, setRecipient } from "../../features/email/emailSlice";
 import MessageList from "./Sidebar/MessageList";
 
 function ContactList() {
   const email = useSelector((state) => state.emailReducer);
   const dispatch = useDispatch();
+  const { socket } = useOutletContext();
+  const [result, setResult] = useState(null);
   // console.log("ContactList: ", email);
   const groupFilterer = email?.groupEmail?.map((item) => {
     return {
@@ -137,7 +140,36 @@ function ContactList() {
 
   useEffect(() => {
     conversations();
+    setResult(sortData);
+    console.log("RESULT 1: ", result);
   }, []);
+
+  useEffect(() => {
+    socket.on("new email", (email) => {
+      console.log("NEW EMAIL", email);
+
+      const getSender = email.header.from[0].match(/<([^>]+)>/)?.[1];
+      console.log("SENDER: ", getSender);
+      // UPDATES THE CONTACT LIST
+      setResult((prevState) => {
+        if (prevState.hasOwnProperty(getSender)) {
+          return {
+            ...prevState,
+            [getSender]: [...prevState[getSender], email],
+          };
+        } else {
+          return {
+            ...prevState,
+            [getSender]: [email],
+          };
+        }
+      });
+
+      // Send or Push this new email to the redux state: email
+      dispatch(addEmail(email));
+    });
+  }, [socket]);
+  console.log("RESULT 2: ", result);
 
   return (
     <>
@@ -145,11 +177,10 @@ function ContactList() {
         {email.allEmail?.length > 0 ? (
           <div>
             <h1 className="chatroom__today">Today</h1>
-            {Object.values(sortData)
-              .sort(compareDates)
-              .map((mail, index) => (
-                <MessageList key={index} email={mail} />
-              ))}
+            {result &&
+              Object.values(result)
+                .sort(compareDates)
+                .map((mail, index) => <MessageList key={index} email={mail} />)}
           </div>
         ) : (
           <div className="loading__icon">

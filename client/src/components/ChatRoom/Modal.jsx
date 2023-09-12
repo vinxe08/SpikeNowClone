@@ -8,9 +8,11 @@ import { IoIosArrowDown } from "react-icons/io";
 import { FaLocationArrow } from "react-icons/fa";
 import CreatableSelect from "react-select/creatable";
 import { pushGroupEmail } from "../../features/email/emailSlice";
+import { useOutletContext } from "react-router-dom";
 
 function Modal() {
   const dispatch = useDispatch();
+  const { socket } = useOutletContext();
   const [groupInfo, setGroupInfo] = useState({
     groupName: "",
     description: "",
@@ -83,6 +85,7 @@ function Modal() {
 
   // Check before create a group.
   const createGroup = async (e) => {
+    const background = `${getRandomString()}`;
     // add ALERT
     if (groupInfo.groupName === "") {
       setError("Group Name is required");
@@ -106,12 +109,12 @@ function Modal() {
           users: filteredValue,
           groupName: groupInfo.groupName,
           description: groupInfo.description,
-          background: `${getRandomString()}`,
+          background,
           timestamp: formatDateToCustomString(date),
         }),
       });
       const data = await response.json();
-
+      console.log("MODAL: ", data);
       // Close modal
       if (data) {
         dispatch(setModal(false));
@@ -120,11 +123,22 @@ function Modal() {
             users: filteredValue,
             groupName: groupInfo.groupName,
             description: groupInfo.description,
-            background: `${getRandomString()}`,
+            background,
             timestamp: formatDateToCustomString(date),
-            _id: groupInfo.groupName,
+            _id: data.response.group._id,
           })
         );
+
+        // -------- SOCKET FOR REAL TIME ADD GROUP ----------
+        socket.emit("group created", {
+          users: filteredValue,
+          groupName: groupInfo.groupName,
+          description: groupInfo.description,
+          background,
+          timestamp: formatDateToCustomString(date),
+          _id: data.response.group._id,
+        });
+
         console.log("SUCCES: ", data);
       }
     } catch (error) {

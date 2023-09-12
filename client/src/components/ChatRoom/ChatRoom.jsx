@@ -63,6 +63,7 @@ function ChatRoom() {
         navigate("/");
         setLoading(false);
       } else {
+        console.log("CODE ERROR: ", data);
         Swal.close();
         Toast.fire({
           icon: "error",
@@ -95,7 +96,6 @@ function ChatRoom() {
     dispatch(setCaller(null));
     dispatch(setIsCalling(false));
     dispatch(setToggle(null));
-    // dispatch(stopMediaStream());
 
     socket.on("previous_video_requests", (data) => {
       if (data) {
@@ -104,6 +104,8 @@ function ChatRoom() {
         dispatch(setCaller(null));
       }
     });
+
+    socket.emit("logged in", state.user.email);
   }, []);
 
   useEffect(() => {
@@ -117,6 +119,9 @@ function ChatRoom() {
   // TODO 3: Uncomment the "sendEmail" function in reply field
   // TODO 4: Clean all unnecessary components, comments, codes that is not used.
   // TODO 5: In ChatRoom
+  // TODO 6: Real-time from outlook to my app.
+  // TODO 7: Real-time for adding group & then ready to go for email
+  // TODO 8: Try getting the id of each email contact and use it to register in socket, if there's a new message, it will notify each in contact list
   // FINAL TODO: Do a full run, but delete all data first in DB.
 
   return (

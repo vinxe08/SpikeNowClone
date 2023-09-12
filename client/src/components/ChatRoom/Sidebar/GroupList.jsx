@@ -19,7 +19,7 @@ import { useOutletContext } from "react-router-dom";
 function GroupList() {
   const user = useSelector((state) => state.emailReducer.user);
   const modal = useSelector((state) => state.menuReducer.modalCreate);
-  const [results, setResults] = useState(null);
+  const [results, setResults] = useState([]);
   const dispatch = useDispatch();
   const state = useSelector((state) => state.emailReducer);
   const [emailState, setEmailState] = useState(state);
@@ -132,9 +132,36 @@ function GroupList() {
     // console.log("USE EFFECT");
   }, [modal]);
 
-  // useEffect(() => {
-  //   fetchAllGroups();
-  // }, []);
+  useEffect(() => {
+    socket.on("new group", (data) => {
+      const recipient = data.users.filter(
+        (name) => name !== emailState.user.email
+      );
+      const to = recipient.join(", ");
+      setResults((prevResult) => [
+        ...prevResult,
+        {
+          data,
+          header: {
+            from: [{ email: emailState.user.email }],
+            date: [data.timestamp],
+            subject: [`${data.groupName}: ${data._id}`],
+            to: [{ email: `${to}` }],
+            type: "group",
+          },
+        },
+      ]);
+
+      console.log("NEW GROUP", data);
+      console.log("INSIDE: ", noEmail); // noEmail.push is working but not updating the ui
+    });
+  }, [socket]);
+
+  useEffect(() => {
+    setResults(noEmail);
+  }, []);
+
+  console.log("NO EMAIL: ", noEmail);
 
   return (
     <div className="GroupList">
@@ -144,10 +171,10 @@ function GroupList() {
         </div>
         <h1 className="group__icontext">Create Group</h1>
       </div>
-      {noEmail.length > 0 && (
+      {results.length > 0 && (
         <div>
           <h1 className="group__divider">RECENT</h1>
-          {noEmail.map((result) => (
+          {results.map((result) => (
             <div
               onClick={() => onMessageSelect(result)}
               key={result.header.date[0]}

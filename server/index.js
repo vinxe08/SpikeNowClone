@@ -5,21 +5,26 @@ const http = require("http");
 const cors = require("cors");
 const { Server } = require("socket.io");
 const mongoose = require("mongoose");
+const { initializeSocket } = require("./lib/socketManager");
 
 app.use(cors());
-
-const server = http.createServer(app);
 
 app.use(express.json());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
-const io = new Server(server, {
-  cors: {
-    origin: "http://localhost:3000",
-    methods: ["GET", "POST"],
-  },
-});
+const server = http.createServer(app);
+// const io = new Server(server, {
+//   cors: {
+//     origin: "http://localhost:3000",
+//     methods: ["GET", "POST"],
+//   },
+// });
+
+// const io = socketManager.initializeSocket(server);
+// const sharedNamespace = io.of("/shared");
+
+const io = initializeSocket(server);
 
 // Import routes
 const EmailRoute = require("./routes/Email");
@@ -39,8 +44,27 @@ let roomData = {};
 let requestID;
 const users = {};
 const socketToRoom = {};
+const loggedUsers = [];
 
+// console.log("IO in SERVER: ", io);
 io.on("connection", (socket) => {
+  console.log("index.js-connection: ");
+
+  socket.on("logged in", (email) => {
+    loggedUsers.push(email);
+    socket.join(email);
+    console.log("Logged in: ", email);
+  });
+
+  socket.on("group created", (data) => {
+    console.log("GROUP DATA: ", data);
+    data.users.map((user) => {
+      socket.to(user).emit("new group", data);
+    });
+    // TRY TO MAP THE data.users and do these socket below
+    // socket.to("EMAIL of user").emit(data);
+  });
+
   socket.on("select_conversation", (id) => {
     console.log("select_conversation: ", id);
     socket.join(id);
@@ -194,6 +218,15 @@ mongoose.connect(`${dbConfig}/${dbName}`, {
   useUnifiedTopology: true,
 });
 
-server.listen(3001, () => {
-  console.log("SERVER IS RUNNING");
+server
+  .listen(3001, () => {
+    console.log("SERVER IS RUNNING");
+  })
+  .on("error", (err) => {
+    console.log("SERVER ERROR: ", err);
+  });
+
+process.on("uncaughtException", function (err) {
+  console.log("process.on handler");
+  console.log(err);
 });

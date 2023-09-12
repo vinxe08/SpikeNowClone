@@ -180,7 +180,9 @@ function MessageList({ email }) {
         </div>
         <h1 className="messages">
           {truncate(
-            email[0]?.body || email.filter((item) => item.body)[0]?.body,
+            email[0]?.body ||
+              email.filter((item) => item.body)[0]?.body ||
+              "No email",
             40
           )}
         </h1>
