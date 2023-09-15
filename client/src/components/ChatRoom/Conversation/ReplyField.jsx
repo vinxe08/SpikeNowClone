@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import "./ReplyField.css";
 import { BiExpandAlt, BiSmile } from "react-icons/bi";
 import { AiOutlinePlusCircle } from "react-icons/ai";
@@ -11,15 +11,12 @@ import Swal from "sweetalert2";
 import { Toast } from "../../../lib/sweetalert";
 
 function ReplyField() {
-  const { socket } = useOutletContext();
   const state = useSelector((state) => state.emailReducer);
   const dispatch = useDispatch();
   const [message, setMessage] = useState("");
   const [receiver, setReceiver] = useState(null);
   const [subject, setSubject] = useState("");
   const hasType = state.email.filter((item) => item.header.type);
-
-  // console.log("SEND_EMAIL: ", state);
 
   function formatDateToCustomString(date) {
     return new Intl.DateTimeFormat("en-US", {
@@ -40,10 +37,7 @@ function ReplyField() {
       setReceiver(
         state.email[0].header.to.filter((mail) => mail !== state.user.email)
       );
-      // SUBJECT: For uniqueness of the email
-      setSubject(
-        `${state.email[0].header.subject[0]}: ${state.email[0].data._id}`
-      );
+      setSubject(state.email[0].header.subject[0]);
     }
     // FOR SINGLE USER
     else {
@@ -67,62 +61,53 @@ function ReplyField() {
         Swal.showLoading();
       },
     });
-    // // ISSUE: MESSAGES WILL NOT SEND VIA SOCKET IF THE CONVO IS NOT OPEN
-    // try {
-    //   const response = await fetch("http://localhost:3001/conversation/send", {
-    //     method: "POST",
-    //     headers: {
-    //       "Content-Type": "application/json",
-    //     },
-    //     body: JSON.stringify({
-    //       ...state.user,
-    //       receiver: receiver,
-    //       message,
-    //       subject,
-    //     }),
-    //   });
-    //   const data = await response.json();
 
-    //   if (data) {
-    // NOT WORKING. TRY CHECK THE MESSAGE LIST.
-    // TRY: Use the state.receiver.
-    console.log("SEND_EMAIL: ", state);
-    await socket.emit("send_email", state.receiver[0]._id, {
-      body: message,
-      header: {
-        date: [formatDateToCustomString(new Date())],
-        from: [state.user.email],
-        subject,
-        to: [receiver],
-      },
-    });
-    dispatch(
-      addEmail({
-        body: message,
-        header: {
-          date: [formatDateToCustomString(new Date())],
-          from: [state.user.email],
-          subject,
-          to: [receiver],
-        },
-      })
-    );
-    setMessage("");
-    Swal.close();
-    Toast.fire({
-      icon: "success",
-      title: "Message sent",
-    });
-    //   }
-    // } catch (error) {
-    //   console.log("CATCH: ", error);
-    //   Swal.close();
-    //   Toast.fire({
-    //     icon: "error",
-    //     title: "Something is wrong. Try Again",
-    //   });
-    //   setMessage("");
-    // }
+    // // TODO: MESSAGES WILL NOT SEND VIA SOCKET IF THE CONVO IS NOT OPEN
+    try {
+      const response = await fetch(
+        `${process.env.REACT_APP_BACKEND_URL}${process.env.REACT_APP_CONVERSATION_SEND}`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            ...state.user,
+            receiver: receiver,
+            message,
+            subject,
+          }),
+        }
+      );
+      const data = await response.json();
+
+      if (data) {
+        dispatch(
+          addEmail({
+            body: message,
+            header: {
+              date: [formatDateToCustomString(new Date())],
+              from: [state.user.email],
+              subject,
+              to: [receiver],
+            },
+          })
+        );
+        setMessage("");
+        Swal.close();
+        Toast.fire({
+          icon: "success",
+          title: "Message sent",
+        });
+      }
+    } catch (error) {
+      Swal.close();
+      Toast.fire({
+        icon: "error",
+        title: "Something is wrong. Try Again",
+      });
+      setMessage("");
+    }
   };
 
   useEffect(() => {

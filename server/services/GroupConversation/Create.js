@@ -9,7 +9,6 @@ module.exports = async (data) => {
     });
 
     if (groupExist) {
-      console.log("IF: ", groupExist);
       return {
         exist: true,
         message: "Group is already exist",
@@ -17,7 +16,6 @@ module.exports = async (data) => {
         groupExist,
       };
     } else {
-      console.log("ELSE: ");
       const create = await GroupConversation.insertMany(data);
       if (create) {
         return {
@@ -29,7 +27,6 @@ module.exports = async (data) => {
       }
     }
   } catch (error) {
-    // console.log("ERROR: ", error);
     return { exists: false, message: "Error! Please try again.", error: true };
   }
 };

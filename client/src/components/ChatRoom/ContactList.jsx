@@ -2,15 +2,17 @@ import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useOutletContext } from "react-router-dom";
 import FadeLoader from "react-spinners/FadeLoader";
-import { addEmail, setRecipient } from "../../features/email/emailSlice";
+import { getEmail, setRecipient } from "../../features/email/emailSlice";
 import MessageList from "./Sidebar/MessageList";
+import { Toast } from "../../lib/sweetalert";
+import { connectionError } from "../../lib/connectionError";
 
 function ContactList() {
   const email = useSelector((state) => state.emailReducer);
   const dispatch = useDispatch();
   const { socket } = useOutletContext();
   const [result, setResult] = useState(null);
-  // console.log("ContactList: ", email);
+
   const groupFilterer = email?.groupEmail?.map((item) => {
     return {
       data: item,
@@ -28,7 +30,6 @@ function ContactList() {
 
   // Groups all email according to email address
   const sortData = emailConcat.reduce((groups, item) => {
-    // console.log("ITEM: ", item);
     const category = item?.header?.from[0]?.email;
     const receiver = item?.header.to?.[0].email;
     const user = email.user.email;
@@ -40,61 +41,37 @@ function ContactList() {
     const hasGroup = groupFilterer?.find(
       (obj) => obj.header.subject[0] === item.header?.subject?.[0]
     );
-    // console.log("GROUP: ", groupFilterer);
 
-    // if (groupFilterer.length > 0 && hasGroup) {
-    // FOR GROUP EMAIL
     if (hasGroup) {
-      // console.log("HAS GROUP: ", item);
       if (!groups[item.header?.subject?.[0]]) {
         groups[item.header?.subject?.[0]] = [];
         groups[item.header?.subject?.[0]].push(hasGroup);
-        // console.log("HAS GROUP: ", hasGroup);
       }
       groups[item.header?.subject?.[0]].push(item);
     }
     // FOR USER
     else if (category === user || receiver !== user) {
-      // console.log("ELSE IF: ", item);
       if (isInGroup.length > 0) {
-        // console.log("CATEGORY IF: ", item);
         let mailInfo;
 
         // ADD: CHECK FOR receiver !== user
         if (isInGroup[0][0].header.from[0].email === user) {
-          // console.log("CATEGORY if: ", item);
           mailInfo = isInGroup[0][0].header.to[0].email;
         } else {
-          // console.log("CATEGORY else: ", item);
           mailInfo = isInGroup[0][0].header.from[0].email;
         }
 
         if (!groups[mailInfo]) {
-          // console.log(mailInfo, "CATEGORY if: ", item);
           groups[mailInfo] = [];
         }
         groups[mailInfo].push(item);
       } else {
-        // console.log("CATEGORY ELSE: ", item);
         if (!groups[receiver]) {
-          // console.log("CATEGORY ELSE-IF: ", item, receiver);
           groups[receiver] = [];
         }
         groups[receiver].push(item);
       }
-    }
-    // else if (groupFilterer.length > 0) {
-    //   console.log("!hasGroup: ", item);
-    //   // MAP THE hasGroup and create groups["subject name"]
-    //   if(!hasGroup){
-    //   groupFilterer.map((data) => {
-    //     groups[data.header.subject[0]] = [];
-    //     return groups[data.header.subject[0]].push(data);
-    //   })}
-
-    // }
-    else {
-      // console.log("ELSE: ", item);
+    } else {
       if (!groups[category]) {
         groups[category] = [];
       }
@@ -104,14 +81,12 @@ function ContactList() {
     return groups;
   }, {});
 
-  // console.log("ITEM: ", sortData);
-
   // FETCH ALL THE CONVERSATIONS
   const conversations = async () => {
     try {
       // THIS IS ONLY FOR SINGLE PEER | CHECK IF IT IS FOR GROUP OR SINGLE
       const response = await fetch(
-        "http://localhost:3001/conversation/retrieve",
+        `${process.env.REACT_APP_BACKEND_URL}${process.env.REACT_APP_CONVERSATION_GET}`,
         {
           method: "POST",
           headers: {
@@ -123,10 +98,12 @@ function ContactList() {
         }
       );
       const data = await response.json();
-      // console.log("CONVERSATION: ", data);
       dispatch(setRecipient(data));
     } catch (error) {
-      // DO SOME ERROR ANIMATION!
+      Toast.fire({
+        icon: "error",
+        title: "Error. Try Again Later",
+      });
     }
   };
 
@@ -141,35 +118,63 @@ function ContactList() {
   useEffect(() => {
     conversations();
     setResult(sortData);
-    console.log("RESULT 1: ", result);
   }, []);
 
   useEffect(() => {
-    socket.on("new email", (email) => {
-      console.log("NEW EMAIL", email);
+    const handleIncomingEmail = (newEmail) => {
+      const getSender = newEmail.header.from[0].match(/<([^>]+)>/)?.[1]; // getSender is undefined if it is for group
+      const groupReceiver = newEmail.header.to[0].split(", ");
 
-      const getSender = email.header.from[0].match(/<([^>]+)>/)?.[1];
-      console.log("SENDER: ", getSender);
-      // UPDATES THE CONTACT LIST
-      setResult((prevState) => {
-        if (prevState.hasOwnProperty(getSender)) {
-          return {
-            ...prevState,
-            [getSender]: [...prevState[getSender], email],
-          };
-        } else {
-          return {
-            ...prevState,
-            [getSender]: [email],
-          };
-        }
-      });
+      // Check if it is for group or it has more than 1 receiver
+      if (groupReceiver) {
+        dispatch(getEmail([...sortData[newEmail.header.subject[0]], newEmail]));
 
-      // Send or Push this new email to the redux state: email
-      dispatch(addEmail(email));
-    });
+        setResult((prevState) => {
+          // Check if it is already in contact/message list
+          if (prevState.hasOwnProperty(newEmail.header.subject[0])) {
+            return {
+              ...prevState,
+              [newEmail.header.subject[0]]: [
+                ...prevState[newEmail.header.subject[0]],
+                newEmail,
+              ],
+            };
+          } else {
+            return {
+              ...prevState,
+              [newEmail.header.subject[0]]: [newEmail],
+            };
+          }
+        });
+      } else {
+        setResult((prevState) => {
+          // If it is already in contact/message list
+          if (prevState.hasOwnProperty(getSender || newEmail.header.to[0])) {
+            return {
+              ...prevState,
+              [getSender || newEmail.header.to[0]]: [
+                ...prevState[getSender || newEmail.header.to[0]],
+                newEmail,
+              ],
+            };
+          } else {
+            return {
+              ...prevState,
+              [getSender || newEmail.header.to[0]]: [newEmail],
+            };
+          }
+        });
+      }
+    };
+
+    socket.on("new email", handleIncomingEmail);
+    socket.on("connection error", connectionError);
+
+    return () => {
+      socket.off("new email", handleIncomingEmail);
+      socket.off("connection error", connectionError);
+    };
   }, [socket]);
-  console.log("RESULT 2: ", result);
 
   return (
     <>

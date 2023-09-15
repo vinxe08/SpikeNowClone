@@ -16,18 +16,13 @@ export default function WelcomePage() {
     password: "",
     imap_server: "",
     imap_port: null,
-    // imap_username: "",
-    // smtp_server: "",
-    // smtp_port: "",
-    // smtp_username: "",
   });
   const [password, setPassword] = useState("");
   const navigate = useNavigate();
   const [userExist, setUserExist] = useState(false);
   const dispatch = useDispatch();
 
-  // Microsoft AAD for Authentication
-  // TODO:
+  // MICROSOFT LOGIN: Didn't add this feature
   const logInWithMicrosoft = async () => {
     Toast.fire({
       icon: "error",
@@ -35,7 +30,7 @@ export default function WelcomePage() {
     });
   };
 
-  // Check the user if it is already registered.
+  // AUTHENTICATION: Check the user if it is already registered.
   const checkUser = async () => {
     Swal.fire({
       title: "Loading...",
@@ -44,34 +39,31 @@ export default function WelcomePage() {
       },
     });
     try {
-      const response = await fetch("http://localhost:3001/api/getUser", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ email: userInfo.email }),
-      });
+      const response = await fetch(
+        `${process.env.REACT_APP_BACKEND_URL}${process.env.REACT_APP_API_GETUSERS}`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ email: userInfo.email }),
+        }
+      );
 
       const result = await response.json();
-      // console.log("WelcomePage: Data Results", result);
 
       if (result?.data?.userExist && !result?.data?.error) {
-        // console.log("IF");
         setUserInfo(result.data.user[0]);
         setUserExist(true);
       } else if (!result?.data?.userExist && !result?.data?.error) {
         dispatch(isUserExist(false));
       } else {
-        // console.log("ELSE");
         Toast.fire({
           icon: "error",
           title: "Error! Try again.",
         });
-        // console.log("ELSE");
       }
       Swal.close();
-
-      // USER ? go to login page : go to IMAP Page
     } catch (error) {
       console.log("CATCH: ", error);
       Swal.close();
@@ -82,7 +74,7 @@ export default function WelcomePage() {
     }
   };
 
-  // DO THIS ALSO IN REGISTRATION PAGE
+  // Do authentication
   const submit = async (e) => {
     e.preventDefault();
     Swal.fire({
@@ -93,7 +85,6 @@ export default function WelcomePage() {
     });
     if (password === userInfo.password) {
       dispatch(setUser(userInfo));
-      // dispatch(getAllEmail(data.email));
       Swal.close();
       navigate("/");
     } else {

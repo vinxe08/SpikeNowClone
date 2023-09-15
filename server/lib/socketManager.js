@@ -10,31 +10,31 @@ function initializeSocket(server) {
     },
   });
 
-  // Your socket.io logic here
-
   return io;
 }
 
-const getIncomingEmail = (email) => {
+const getIncomingEmail = (mail, user) => {
   if (!io) {
     throw new Error("Socket.IO has not been initialized yet.");
   }
-  // io.to("new email").emit(email)
-  const getReceiver = email.header.to[0].match(/<([^>]+)>/)?.[1];
-  console.log("GET INCOMING EMAIL: ", email, getReceiver);
-  io.to(getReceiver).emit("new email", email);
+  const groupReceiver = mail.header.to[0].split(", ");
+  const getReceiver = mail.header.to[0].match(/<([^>]+)>/)?.[1];
+
+  if (groupReceiver.length > 0) {
+    // This will trigger twice because two user has new email
+    io.to(`${mail.header.subject[0]} - ${user}`).emit("new email", mail);
+  } else {
+    io.to(getReceiver || mail.header.to[0]).emit("new email", mail);
+  }
 };
 
-// NOT USING
-function getSocketIO() {
-  if (!io) {
-    throw new Error("Socket.IO has not been initialized yet.");
-  }
-  return io;
-}
+// For Connection Error
+const connectionError = (err) => {
+  io.to("connection error").emit(err);
+};
 
 module.exports = {
   initializeSocket,
-  getSocketIO,
   getIncomingEmail,
+  connectionError,
 };

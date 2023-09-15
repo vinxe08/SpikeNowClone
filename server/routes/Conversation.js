@@ -28,20 +28,18 @@ router.post("/send", async (req, res) => {
     subject,
   } = req.body;
 
-  console.log("receiver", receiver);
+  const main = async () => {
+    const transporter = nodeMailer.createTransport({
+      host: smtp_server,
+      port: smtp_port, // SMTP PORT
+      secure: false, // true for 465/google, false for other ports
+      auth: {
+        user: email,
+        pass: password,
+      },
+    });
 
-  try {
-    const main = async () => {
-      const transporter = nodeMailer.createTransport({
-        host: smtp_server,
-        port: smtp_port, // SMTP PORT
-        secure: false, // true for 465, false for other ports
-        auth: {
-          user: email,
-          pass: password,
-        },
-      });
-
+    try {
       const info = await transporter.sendMail({
         from: `<${email}>`,
         to: Array.isArray(receiver) ? receiver.join(", ") : receiver,
@@ -50,28 +48,17 @@ router.post("/send", async (req, res) => {
         text: message,
       });
 
-      // console.log("Message send: ", info.messageId);
-      // For 1st time message: Store the info.messageId in DB || you can use this for socket id for private ||
-      // add this in MessageList(If the user click message, check if they already have info.messageId in DB(if user's email is in DB together with the messagage select email) -> get the info.messageId )
       if (info.messageId) {
-        // const result = await CreateServices({
-        //   email,
-        //   receiver,
-        //   messageId: info.messageId,
-        // });
-
         res.status(200).send({
           message: "Successfully send",
-          // messageId: info.messageId,
         });
       }
-    };
+    } catch (error) {
+      res.status(500).send({ error: error });
+    }
+  };
 
-    main();
-  } catch (error) {
-    res.status(500).send({ error: error });
-    // console.log("ERROR: ", error);
-  }
+  main();
 });
 
 router.post("/retrieve", async (req, res) => {

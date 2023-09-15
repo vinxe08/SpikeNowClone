@@ -25,32 +25,9 @@ function GroupList() {
   const [emailState, setEmailState] = useState(state);
   const { socket } = useOutletContext();
 
-  // console.log("EMAIL STATE: ", emailState);
-
-  // TODO: Display all the Group that the user is in.
-  // REMOVE THIS. GET THE DATA FROM ChatRoom.jsx(data.groups)
-  // const fetchAllGroups = async () => {
-  //   try {
-  //     const response = await fetch("http://localhost:3001/group/retrieve", {
-  //       method: "POST",
-  //       headers: {
-  //         "Content-Type": "application/json",
-  //       },
-  //       body: JSON.stringify({
-  //         email: user.email,
-  //       }),
-  //     });
-  //     const data = await response.json();
-  //     setResults(data.group);
-  //     console.log("GROUP LIST: ", data.group);
-  //   } catch (error) {}
-  // };
-
   const groupSet = new Set(
     emailState.groupEmail.map((item) => `${item.groupName}: ${item._id}`)
   );
-
-  // console.log("GROUP SET: ", groupSet);
 
   // Returns all the email that has group
   const emailSet = emailState.allEmail.filter(
@@ -58,8 +35,6 @@ function GroupList() {
       item.header.subject &&
       item.header.subject.some((subject) => groupSet.has(subject))
   );
-
-  // console.log("EMAIL SET", emailSet);
 
   const groupedEmail = emailSet.map((data) => {
     const [groupName, id] = data.header.subject[0].split(": ");
@@ -74,18 +49,16 @@ function GroupList() {
   });
 
   const noEmail = emailState.groupEmail.map((data) => {
-    // console.log("MAP: ", data);
     const samp = groupedEmail.filter((item) => item.data._id === data._id);
 
     if (samp.length > 0) {
-      // console.log("IF: ", samp);
       return samp[0];
     } else {
       const recipient = data.users.filter(
         (name) => name !== emailState.user.email
       );
       const to = recipient.join(", ");
-      // console.log("ELSE: ", to);
+
       return {
         data,
         header: {
@@ -101,7 +74,6 @@ function GroupList() {
 
   const onMessageSelect = (email) => {
     dispatch(setToggle("group"));
-    console.log("ON SELECT: ", email);
     dispatch(
       setReciever([
         {
@@ -120,16 +92,13 @@ function GroupList() {
         },
       ])
     );
-    // TODO: This should get the email like in MessageList.jsx -> dispatchEmail()
-    dispatch(getEmail([email])); // user the data.conversation for email and use the rest for ContactInfo & ReplyField
+    dispatch(getEmail([email]));
 
-    // ADD WEB SOCKETS
     socket.emit("select_conversation", email.data._id);
   };
 
   useEffect(() => {
     setEmailState(state);
-    // console.log("USE EFFECT");
   }, [modal]);
 
   useEffect(() => {
@@ -151,17 +120,12 @@ function GroupList() {
           },
         },
       ]);
-
-      console.log("NEW GROUP", data);
-      console.log("INSIDE: ", noEmail); // noEmail.push is working but not updating the ui
     });
   }, [socket]);
 
   useEffect(() => {
     setResults(noEmail);
   }, []);
-
-  console.log("NO EMAIL: ", noEmail);
 
   return (
     <div className="GroupList">

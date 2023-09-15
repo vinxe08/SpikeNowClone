@@ -3,7 +3,7 @@ import { useSelector } from "react-redux";
 import { Outlet, Navigate } from "react-router-dom";
 import io from "socket.io-client";
 
-const socket = io.connect("http://localhost:3001");
+const socket = io.connect(`${process.env.REACT_APP_SOCKET}`);
 
 function RootLayout() {
   const [username, setUsername] = useState("");

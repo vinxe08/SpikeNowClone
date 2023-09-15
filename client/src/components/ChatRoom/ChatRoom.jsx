@@ -26,8 +26,6 @@ import GroupList from "./Sidebar/GroupList";
 import Modal from "./Modal";
 import GroupConversation from "./GroupEmail/GroupConversation";
 import FadeLoader from "react-spinners/FadeLoader";
-import { stopMediaStream } from "../../features/stream/mediaStream";
-// import { useVideoChat } from "./Contact/useVideoChat";
 
 function ChatRoom() {
   const state = useSelector((state) => state.emailReducer);
@@ -40,30 +38,38 @@ function ChatRoom() {
   const modal = useSelector((state) => state.menuReducer.modalCreate);
   const [loading, setLoading] = useState(false);
 
-  // const { leaveCall } = useVideoChat();
-  // console.log("CHAT ROOM");
   const fetchUserInfo = async () => {
     setLoading(true);
     try {
       // Fetch the User's Information and all Email.
-      const response = await fetch("http://localhost:3001/api/users", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(state.user),
-      });
+      const response = await fetch(
+        `${process.env.REACT_APP_BACKEND_URL}${process.env.REACT_APP_API_USERS}`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(state.user),
+        }
+      );
       const data = await response.json();
-      // console.log("DATA: ", data);
 
       if (!data.userExists && !data.error) {
         dispatch(getAllEmail(data.email));
-        dispatch(setGroupEmail(data.groups.group));
+        if (data.groups.group) {
+          dispatch(setGroupEmail(data.groups.group));
+          data.groups.group.map((group) => {
+            // FOR GROUP INCOMING MAIL
+            socket.emit(
+              "group logged in",
+              `${group.groupName}: ${group._id} - ${state.user.email}`
+            );
+          });
+        }
         Swal.close();
         navigate("/");
         setLoading(false);
       } else {
-        console.log("CODE ERROR: ", data);
         Swal.close();
         Toast.fire({
           icon: "error",
@@ -72,14 +78,12 @@ function ChatRoom() {
         setLoading(false);
       }
     } catch (error) {
-      console.log("ERROR: ", error);
       Swal.close();
       Toast.fire({
         icon: "error",
         title: "Error. Try Again Later",
       });
       setLoading(false);
-      // window.location.reload();
     }
   };
 
@@ -91,7 +95,7 @@ function ChatRoom() {
     if (!state.user) {
       navigate("/login");
     }
-    dispatch(getEmail(null));
+    dispatch(getEmail([]));
     dispatch(hideContactInfo());
     dispatch(setCaller(null));
     dispatch(setIsCalling(false));
@@ -105,6 +109,7 @@ function ChatRoom() {
       }
     });
 
+    // FOR SINGLE INCOMING MAIL
     socket.emit("logged in", state.user.email);
   }, []);
 
@@ -114,15 +119,7 @@ function ChatRoom() {
     });
   }, [socket]);
 
-  // TODO 1: In Contact Info -> the emails/messages must only contains the recipient's emails/messages
-  // TODO 2: The Contact Info close button(Not in video/voice call page).
-  // TODO 3: Uncomment the "sendEmail" function in reply field
-  // TODO 4: Clean all unnecessary components, comments, codes that is not used.
-  // TODO 5: In ChatRoom
-  // TODO 6: Real-time from outlook to my app.
-  // TODO 7: Real-time for adding group & then ready to go for email
-  // TODO 8: Try getting the id of each email contact and use it to register in socket, if there's a new message, it will notify each in contact list
-  // FINAL TODO: Do a full run, but delete all data first in DB.
+  // TODO 2: index.js or server in deployment, remove the limit. Line 102-105
 
   return (
     <div className="ChatRoom">

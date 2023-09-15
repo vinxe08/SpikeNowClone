@@ -13,15 +13,13 @@ function UserSection() {
   const user = useSelector((state) => state.emailReducer.user);
   const [userInfoModal, setUserInfoModal] = useState(false);
   const navigate = useNavigate();
-  // console.log("USER: ", user);
 
   const toggleUserInfo = () => {
     setUserInfoModal((prev) => !prev);
   };
 
+  // Logout: Clean all user's trace
   const logout = () => {
-    console.log("LOGOUT");
-    // ADD LOGOUT FUNCTIONALITY HERE!!!
     persistor.pause();
     persistor.flush().then(() => {
       return persistor.purge();
@@ -35,6 +33,7 @@ function UserSection() {
         <div className="hamburger__icon">
           <ImMenu />
         </div>
+
         {/* Modal for user info */}
         {userInfoModal ? (
           <div className="userinfo__modal">

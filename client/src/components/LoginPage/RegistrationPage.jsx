@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { TfiEmail } from "react-icons/tfi";
 import { SlArrowLeft, SlArrowDown } from "react-icons/sl";
 import { RiQuestionnaireLine } from "react-icons/ri";
@@ -7,7 +7,7 @@ import Swal from "sweetalert2";
 import { useNavigate } from "react-router-dom";
 import { Toast } from "../../lib/sweetalert";
 import { useDispatch } from "react-redux";
-import { getAllEmail, setUser } from "../../features/email/emailSlice";
+import { setUser } from "../../features/email/emailSlice";
 import { isUserExist } from "../../features/login/loginSlice";
 
 function RegistrationPage() {
@@ -29,7 +29,6 @@ function RegistrationPage() {
 
   const inputOnChange = (e) => {
     setUserInfo({ ...userInfo, [e.target.name]: e.target.value });
-    // console.log(userInfo);
   };
 
   // FOR REGISTRATION PAGE: Create an API that checks if the user is in DB
@@ -47,22 +46,26 @@ function RegistrationPage() {
         });
 
         // Check if the user's info is valid
-        const response = await fetch("http://localhost:3001/api/users", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(userInfo),
-        });
+        const response = await fetch(
+          `${process.env.REACT_APP_BACKEND_URL}${process.env.REACT_APP_API_USERS}`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(userInfo),
+          }
+        );
+
         const data = await response.json();
-        //if not registered || no error
+
+        // SUCCED: redirect to Dashboard and fetch also the user details
         if (!data.userExists && !data.error) {
-          // redirect to Dashboard and fetch also the user details
           dispatch(setUser(userInfo));
-          // dispatch(getAllEmail(data.email));
           Swal.close();
           navigate("/");
         } else {
+          // ANIMATION
           Swal.close();
           Toast.fire({
             icon: "error",

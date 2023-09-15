@@ -3,7 +3,7 @@ import { useDispatch, useSelector } from "react-redux";
 import Peer from "simple-peer";
 import io from "socket.io-client";
 import { setIsCalling } from "../../../features/show/showSlice";
-import { setMediaStream } from "../../../features/stream/mediaStream";
+import { Toast } from "../../../lib/sweetalert";
 
 export function useVideoChat() {
   const dispatch = useDispatch();
@@ -13,45 +13,26 @@ export function useVideoChat() {
   const peersRef = useRef([]);
 
   const user = useSelector((state) => state.emailReducer.user.email);
-  const state = useSelector((state) => state.emailReducer.email);
   const recipient = useSelector((state) => state.emailReducer.recipients);
-  // const [recipient, setRecipient] = useState();
-
-  // const selectedRecipient = allRecipients?.filter(
-  //   (data) =>
-  //     data.users.includes(
-  //       state?.[0].header.from?.[0]?.email || state?.[0].header.from?.[0]
-  //     ) &&
-  //     data.users.includes(
-  //       state?.[0].header.to?.[0]?.email || state?.[0].header.to?.[0]
-  //     )
-  // );
 
   useEffect(() => {
     window.addEventListener("beforeunload", leaveCall);
 
-    socketRef.current = io.connect("http://localhost:3001");
+    socketRef.current = io.connect(`${process.env.REACT_APP_SOCKET}`);
     navigator.mediaDevices
       .getUserMedia({ video: true, audio: true })
       .then((stream) => {
         if (userVideo.current) {
           userVideo.current.srcObject = stream;
-          // SEND THIS STREAM IN CHAT ROOM FOR track.stop()
-          // dispatch(setMediaStream(stream));
         }
-        // dispatch(setMediaStream({ stream }));
-        console.log("RECIPIENTS", recipient);
         // REGISTER IN SERVER - USER TO RECEIVER
-        // if (recipient) {
         socketRef.current.emit("join room", {
           roomID: recipient[0]._id,
           user,
-        }); // RECIPIENT IS NOT FOR SPECIFIC ID FOR EMAIL/CONTACT
-        // }
+        });
 
-        // POV: RECEIVER
+        // GET ALL THE USER's PEER in SERVER
         socketRef.current.on("all users", (users) => {
-          console.log("ALL USERS: ", users);
           const peers = [];
           users.forEach((user) => {
             const peer = createPeer(user.userID, socketRef.current.id, stream);
@@ -65,7 +46,7 @@ export function useVideoChat() {
           setPeers(peers);
         });
 
-        // POV: USER
+        // ADD's THE INCOMING PEER/USER
         socketRef.current.on("user joined", (payload) => {
           const peer = addPeer(payload.signal, payload.callerID, stream);
           peersRef.current.push({
@@ -92,24 +73,25 @@ export function useVideoChat() {
 
           if (peerObj) {
             peerObj.peer.destroy();
-            console.log("PEER 1 DESTROY");
           }
-          console.log("PEER OBJ: ", peerObj);
+
           const peers = peersRef.current.filter((p) => p.peerID !== id);
           peersRef.current = peers;
           setPeers(peers);
         });
       })
-      .catch((error) => console.log("ERROR: ", error)); // Add an Error animation
+      .catch((error) => {
+        console.log(error);
+        Toast.fire({
+          icon: "error",
+          title: "Error. Try Again Later",
+        });
+      });
 
     const userVideoRef = userVideo.current;
 
     return () => {
-      // if (userVideo.current) {
-      //   userVideo.current.srcObject.getTracks().forEach((track) => track.stop());
-      //   dispatch(setIsCalling(false));
-      // }
-
+      // FOR CLEAN UP
       if (userVideoRef) {
         const stream = userVideoRef.srcObject;
         if (stream) {
@@ -117,7 +99,7 @@ export function useVideoChat() {
           const tracks = stream.getTracks();
           tracks.forEach((track) => track.stop());
         }
-        // userVideo.current.srcObject = null;
+
         userVideoRef.srcObject = null;
       }
 
@@ -125,6 +107,7 @@ export function useVideoChat() {
     };
   }, []);
 
+  // Create a PEER Connection and send in SERVER
   function createPeer(userToSignal, callerID, stream) {
     const peer = new Peer({
       initiator: true,
@@ -133,7 +116,6 @@ export function useVideoChat() {
     });
 
     peer.on("signal", (signal) => {
-      // RECEIVER TO USER
       socketRef.current.emit("sending signal", {
         userToSignal,
         callerID,
@@ -143,12 +125,17 @@ export function useVideoChat() {
     });
 
     peer.on("error", (err) => {
-      console.log("CREATE PEER ERROR: ", err);
+      console.log(err);
+      Toast.fire({
+        icon: "error",
+        title: "Error. Try Again Later",
+      });
     });
 
     return peer;
   }
 
+  // ADD ALL THE PEER THAT IS IN SERVER EXCLUDE ME/USER
   function addPeer(incomingSignal, callerID, stream) {
     const peer = new Peer({
       initiator: false,
@@ -157,12 +144,15 @@ export function useVideoChat() {
     });
 
     peer.on("signal", (signal) => {
-      // USER TO RECEIVER
       socketRef.current.emit("returning signal", { signal, callerID });
     });
 
     peer.on("error", (err) => {
-      console.log("ADD PEER ERROR: ", err);
+      console.log(err);
+      Toast.fire({
+        icon: "error",
+        title: "Error. Try Again Later",
+      });
     });
 
     setTimeout(() => {
@@ -172,6 +162,7 @@ export function useVideoChat() {
     return peer;
   }
 
+  // Leave Call:
   const leaveCall = () => {
     socketRef.current.emit("leave call");
     if (userVideo.current) {

@@ -4,60 +4,17 @@ const Imap = require("imap"),
   inspect = require("util").inspect;
 const simpleParser = require("mailparser").simpleParser;
 
-// console.log("USER");
-const { getIncomingEmail } = require("../lib/socketManager");
-
-const fetchNewEmail = (newEmail) => {
-  console.log("NEW: ", newEmail[0]);
-  // console.log("IO: ", io);
-  // io.on("connection", (socket) => {
-  //   console.log("user.js-connection: ", newEmail);
-  //   socket.emit("new email", newEmail);
-  // });
-  getIncomingEmail(newEmail[0]);
-};
-
-const mailPromises = async (emails) => {
-  emails.map(async (email) => {
-    const body = await simpleParser(email.body);
-    let emailBody;
-
-    if (body.text) {
-      const originalString = body.text;
-      const endString = body.headerLines[0].line;
-      const endIndex = originalString.indexOf(endString);
-      if (endIndex !== -1) {
-        const truncatedString = originalString.substring(0, endIndex);
-        emailBody = truncatedString;
-      } else {
-        emailBody = body.text;
-      }
-    } else if (body.headerLines.length > 0) {
-      // console.log("body: ", body);
-      emailBody = body.headerLines?.[0].line;
-    }
-
-    const data = { header: email.header, body: emailBody };
-    return data;
-  });
-};
-
-// console.log("USER IO: ", io);
-// try {
-// const { io } = require("../index");
-// // Use 'io' here
-// io.on("connection", (socket) => {
-//   // Your socket.io logic here
-//   console.log("IO TRY: ", socket);
-// });
-// } catch (error) {
-//   console.error('Error importing "io" from index.js:', error);
-// }
+const { getIncomingEmail, connectionError } = require("../lib/socketManager");
 
 const CreateServices = require("../services/User/Create");
 const RecipientsService = require("../services/User/Retrieve");
 const GetUserService = require("../services/User/GetUser");
 const GroupServices = require("../services/GroupConversation/Retrieve");
+
+// Sends the new email from server to socket to client
+const fetchNewEmail = (newEmail, email) => {
+  getIncomingEmail(newEmail[0], email);
+};
 
 router.post("/users", async (req, res) => {
   const { imap_server, imap_port, email, password } = req.body;
@@ -69,30 +26,27 @@ router.post("/users", async (req, res) => {
     host: imap_server,
     port: imap_port,
     tls: true,
+    socketTimeout: 30000,
   });
 
   im.connect();
 
+  im.once("error", (err) => {
+    // Handles the connection error
+    connectionError(err);
+  });
+
   im.once("ready", () => {
-    // console.log("IM IS READY");
     const newEmail = [];
 
     im.openBox("INBOX", true, (err, box) => {
-      if (err) res.status(500).send({ error: err });
+      if (err) throw new Error(err);
       const fetchOptions = {
         bodies: ["HEADER.FIELDS (FROM TO SUBJECT DATE)", "TEXT"],
         struct: true,
       };
-      // console.log("IM OPEN BOX");
 
       im.on("mail", (numNewMsgs) => {
-        // console.log("IM IS ON `MAIL`");
-        // const fetch = im.seq.fetch(
-        //   box.messages.total + ":" + (box.messages.total - numNewMsgs + 1),
-        //   fetchOptions
-        // );
-        console.log("NEW MESSAGE");
-
         const fetch = im.seq.fetch(
           box.messages.total - numNewMsgs + 1 + ":" + box.messages.total,
           fetchOptions
@@ -119,15 +73,12 @@ router.post("/users", async (req, res) => {
           });
 
           msg.once("end", () => {
-            // Emit the email content to connected clients
-            // io.emit("newEmail", { content: messageText });
-            // fetchNewEmail(messageText);
             newEmail.push(data);
           });
         });
 
         fetch.on("error", (err) => {
-          console.log("ERROR in im fetch", err);
+          throw new Error(err);
         });
 
         fetch.once("end", async () => {
@@ -151,7 +102,6 @@ router.post("/users", async (req, res) => {
                     emailBody = body.text;
                   }
                 } else if (body.headerLines.length > 0) {
-                  // console.log("body: ", body);
                   emailBody = body.headerLines?.[0].line;
                 }
 
@@ -164,30 +114,26 @@ router.post("/users", async (req, res) => {
 
               return { emails };
             } catch (error) {
-              console.log("CATCH ERROR: ", error); // send this in your client
+              throw new Error(error);
             }
           };
 
           parseEmail()
             .then(({ emails }) => {
-              fetchNewEmail(emails);
-              im.end();
+              fetchNewEmail(emails, email);
+              // im.end();
             })
             .catch((error) => {
-              console.log("ParseEmail ERROR: ", error);
               fetchNewEmail(error);
-              im.end();
             });
         });
       });
     });
-    // ------------ END FOR NEW MAIL ----------------
   });
 
-  im.once("end", function () {
-    console.log(" NEW Connection ended");
-  });
+  im.once("end", function () {});
 
+  // ----------------------- FOR EMAIL & REPLY ---------------------
   // IMAP configuration
   const imap = new Imap({
     user: email,
@@ -195,9 +141,16 @@ router.post("/users", async (req, res) => {
     host: imap_server,
     port: imap_port,
     tls: true,
+    socketTimeout: 30000,
   });
 
   imap.connect();
+
+  imap.once("error", (err) => {
+    if (!res.headersSent) {
+      res.status(500).send({ error: err });
+    }
+  });
 
   imap.once("ready", () => {
     let allEmail = {
@@ -205,145 +158,18 @@ router.post("/users", async (req, res) => {
       reply: null,
     };
 
-    const newEmail = [];
-
-    // FOR USER's INBOX
+    // ---------------- FOR USER's INBOX -------------------------
     imap.openBox("INBOX", true, (err, box) => {
-      if (err) res.status(500).send({ error: err });
+      if (err) throw new Error(err);
       const fetchOptions = {
         bodies: ["HEADER.FIELDS (FROM TO SUBJECT DATE)", "TEXT"],
         struct: true,
       };
       imap.search(["ALL"], (searchErr, results) => {
-        if (searchErr) res.status(500).send({ error: searchErr });
+        if (searchErr) throw new Error(searchErr);
 
-        // ---------------------- FOR NEW MAIL -----------------------
-        // imap.on("mail", (numNewMsgs) => {
-        //   // const fetch = imap.seq.fetch(
-        //   //   box.messages.total + ":" + (box.messages.total - numNewMsgs + 1),
-        //   //   fetchOptions
-        //   // );
-        //   console.log("NEW MESSAGE");
-
-        //   const fetch = imap.seq.fetch(
-        //     box.messages.total - numNewMsgs + 1 + ":" + box.messages.total,
-        //     fetchOptions
-        //   );
-
-        //   fetch.on("message", (msg, seqno) => {
-        //     let messageText = "";
-
-        //     msg.on("body", (stream, info) => {
-        //       stream.on("data", (chunk) => {
-        //         messageText += chunk.toString("utf8");
-        //       });
-        //     });
-
-        //     msg.once("end", () => {
-        //       // Emit the email content to connected clients
-        //       // io.emit("newEmail", { content: messageText });
-        //       console.log("MSG END",messageText)
-        //       fetchNewEmail(messageText);
-        //     });
-        //   });
-        // });
-
-        // ------------------- END ----------------------
-
-        // ------------------- NEW ----------------------
-        // imap.on("mail", (numNewMsgs) => {
-        //   console.log("ON `MAIL`");
-        //   console.log("NEW MESSAGE");
-
-        //   const fetch = imap.seq.fetch(
-        //     box.messages.total - numNewMsgs + 1 + ":" + box.messages.total,
-        //     fetchOptions
-        //   );
-
-        //   fetch.on("message", (msg, seqno) => {
-        //     let data = { header: "", body: "" };
-
-        //     msg.on("body", (stream, info) => {
-        //       let messageText = "";
-
-        //       stream.on("data", (chunk) => {
-        //         messageText += chunk.toString("utf8");
-        //       });
-
-        //       stream.on("end", async () => {
-        //         if (info.which !== "TEXT") {
-        //           const header = Imap.parseHeader(messageText);
-        //           data.header = header;
-        //         } else if (info.which === "TEXT") {
-        //           data.body = messageText;
-        //         }
-        //       });
-        //     });
-
-        //     msg.once("end", () => {
-        //       // Emit the email content to connected clients
-        //       // io.emit("newEmail", { content: messageText });
-        //       // fetchNewEmail(messageText);
-        //       newEmail.push(data);
-        //       console.log("MSG END: ", data);
-        //     });
-        //   });
-
-        //   fetch.on("error", (err) => {
-        //     console.log("ERROR in imap fetch", err);
-        //   });
-
-        //   fetch.once("end", async () => {
-        //     const parseEmail = async () => {
-        //       try {
-        //         const emailPromises = newEmail.map(async (email) => {
-        //           const body = await simpleParser(email.body);
-        //           let emailBody;
-
-        //           if (body.text) {
-        //             const originalString = body.text;
-        //             const endString = body.headerLines[0].line;
-        //             const endIndex = originalString.indexOf(endString);
-        //             if (endIndex !== -1) {
-        //               const truncatedString = originalString.substring(
-        //                 0,
-        //                 endIndex
-        //               );
-        //               emailBody = truncatedString;
-        //             } else {
-        //               emailBody = body.text;
-        //             }
-        //           } else if (body.headerLines.length > 0) {
-        //             // console.log("body: ", body);
-        //             emailBody = body.headerLines?.[0].line;
-        //           }
-
-        //           const data = { header: email.header, body: emailBody };
-        //         });
-        //       } catch (error) {
-        //         console.log("CATCH ERROR: ", error); // send this in your client
-        //       }
-
-        //       parseEmail()
-        //         .then(({ emails }) => {
-        //           fetchNewEmail(emails);
-        //           // imap.end();
-        //         })
-        //         .catch((error) => {
-        //           console.log("ParseEmail ERROR: ", error);
-        //           fetchNewEmail(error);
-        //           // imap.end();
-        //         });
-        //     };
-        //   });
-        // });
-
-        // ------------------ END FOR NEW MAIL ---------------------
-
-        console.log("SEARCH");
         const emailList = [];
 
-        // results.forEach((uid) => {
         const fetch = imap.fetch(results, fetchOptions);
         fetch.on("message", (msg, seqno) => {
           let data = { header: "", body: "" };
@@ -372,23 +198,25 @@ router.post("/users", async (req, res) => {
           });
         });
 
+        fetch.on("error", (err) => {
+          throw new Error(err);
+        });
+
         fetch.once("end", async () => {
           const user = await CreateServices(req.body);
           const groups = await GroupServices(req.body);
           allEmail.email = emailList;
-          // console.log("INBOX: ", allEmail.email);
-          console.log("FETCH END");
 
-          // FOR USER's SEND/REPLY
+          // ------------------ FOR USER's SEND/REPLY --------------------
           imap.openBox("SENT", true, (err, mailbox) => {
-            if (err) res.status(500).send({ error: err });
+            if (err) throw new Error(err);
             const fetchOptions = {
               bodies: ["HEADER.FIELDS (FROM TO SUBJECT DATE)", "TEXT"],
               struct: true,
             };
 
             imap.search(["ALL"], (searchErr, results) => {
-              if (searchErr) res.status(500).send({ error: searchErr });
+              if (searchErr) throw new Error(searchErr);
 
               const replyList = [];
 
@@ -420,16 +248,17 @@ router.post("/users", async (req, res) => {
                 });
               });
 
+              f.on("error", (err) => {
+                throw new Error(err);
+              });
+
               f.once("end", async () => {
                 allEmail.reply = replyList;
-                // console.log("REPLY: ", replyList);
-                // For the reply, some email dont contain data when using simpleParser, and some has.
-                // TRY LOGIC: if(body.text) -> body.text -> else -> replyList
 
-                // Make this for allEmail.reply also
+                // --------------- Modify the email for INBOX & SENT/REPLY ----------------------
                 const parseEmail = async () => {
                   try {
-                    // ----------- OLD Promises --------------
+                    // ----------- EMAIL FOR INBOX --------------
                     const emailPromises = allEmail.email.map(async (email) => {
                       const body = await simpleParser(email.body);
                       let emailBody;
@@ -448,7 +277,6 @@ router.post("/users", async (req, res) => {
                           emailBody = body.text;
                         }
                       } else if (body.headerLines.length > 0) {
-                        // console.log("body: ", body);
                         emailBody = body.headerLines?.[0].line;
                       }
 
@@ -456,11 +284,9 @@ router.post("/users", async (req, res) => {
                       return data;
                     });
 
+                    // ----------- EMAIL FOR REPLY/SENT --------------
                     const replyPromises = allEmail.reply.map(async (email) => {
                       const body = await simpleParser(email.body);
-                      // console.log("RAW: ", email);
-                      // console.log("BODY: ", body);
-                      // console.log("RAW: ", email, "BODY: ", body);
 
                       let emailBody;
 
@@ -481,7 +307,6 @@ router.post("/users", async (req, res) => {
                         body.headerLines.length > 0 &&
                         body.headerLines?.[0].line !== "<html>"
                       ) {
-                        // console.log("body: ", body);
                         emailBody = body.headerLines?.[0].line;
                       } else {
                         emailBody = email.body;
@@ -493,63 +318,15 @@ router.post("/users", async (req, res) => {
 
                     const emails = await Promise.all(emailPromises);
                     const replies = await Promise.all(replyPromises);
-                    // // --------------- END -------------------
 
-                    // TRY
-                    // console.log("ALL EMAIL: ", allEmail);
-                    // const emails = await Promise.all(
-                    //   mailPromises(allEmail.email)
-                    // );
-                    // const replies = await Promise.all(
-                    //   mailPromises(allEmail.reply)
-                    // );
-
-                    // console.log("REPLIES: ", replies);
                     return { emails, replies };
                   } catch (error) {
-                    console.log("CATCH: ", error);
-                    throw error;
+                    throw new Error(searchErr);
                   }
-
-                  // const emails = await Promise.all(
-                  //   allEmail.email.map(async (email) => {
-                  //     const body = await simpleParser(email.body);
-                  //     let emailBody;
-                  //     console.log("BODY: ", body);
-
-                  //     // Used to trim extra details of the email
-                  //     if (body.text) {
-                  //       const originalString = body.text;
-                  //       const endString = body.headerLines[0].line;
-                  //       const endIndex = originalString.indexOf(endString);
-                  //       if (endIndex !== -1) {
-                  //         const truncatedString = originalString.substring(
-                  //           0,
-                  //           endIndex
-                  //         );
-                  //         emailBody = truncatedString;
-                  //       } else {
-                  //         emailBody = body.text;
-                  //       }
-                  //     } else if (body.headerLines.length > 0) {
-                  //       // console.log("body: ", body);
-                  //       emailBody = body.headerLines?.[0].line;
-                  //     }
-
-                  //     const data = { header: email.header, body: emailBody };
-                  //     return data;
-                  //   })
-                  // );
-
-                  // console.log("REPLY: ", allEmail.reply);
-                  // return { inbox: emails, sent: allEmail.reply };
                 };
 
                 parseEmail()
                   .then(({ emails, replies }) => {
-                    // console.log("REPLYLIST: ", replyList);
-                    // console.log("EMAILS PARSED: ", emails);
-                    // console.log("REPLIES PARSED: ", replies);
                     res.status(200).send({
                       email: { inbox: emails, sent: replies },
                       error: user.error,
@@ -560,74 +337,19 @@ router.post("/users", async (req, res) => {
                     imap.end();
                   })
                   .catch((error) => {
-                    console.log("ERROR 247: ", error);
-                    res.status(500).send({
-                      error: error,
-                      message: "ERROR",
-                    });
+                    if (error) {
+                      throw new Error(error);
+                    }
                     imap.end();
                   });
               });
             });
           });
-          // END
-
-          // const parseEmail = async () => {
-          //   const emails = await Promise.all(
-          //     emailList.map(async (email) => {
-          //       const body = await simpleParser(email.body);
-          //       let emailBody;
-
-          //       // Used to trim extra details of the email
-          //       if (body.text) {
-          //         const originalString = body.text;
-          //         const endString = body.headerLines[0].line;
-          //         const endIndex = originalString.indexOf(endString);
-          //         if (endIndex !== -1) {
-          //           const truncatedString = originalString.substring(
-          //             0,
-          //             endIndex
-          //           );
-          //           emailBody = truncatedString;
-          //         } else {
-          //           emailBody = body.text;
-          //         }
-          //       } else if (body.headerLines.length > 0) {
-          //         console.log("body: ", body);
-          //         emailBody = body.headerLines?.[0].line;
-          //       }
-          //       const data = { header: email.header, body: emailBody };
-          //       return data;
-          //     })
-          //   );
-
-          //   return emails;
-          // };
-
-          // parseEmail()
-          //   .then((emails) => {
-          //     res.status(200).send({
-          //       email: emails,
-          //       error: user.error,
-          //       userExist: user.userExist,
-          //     });
-
-          //     imap.end();
-          //   })
-          //   .catch((error) => {
-          //     console.log("ERROR 247: ", error);
-          //     res.status(500).send({
-          //       error: error,
-          //       message: "ERROR",
-          //     });
-          //   });
         });
       });
     });
 
-    imap.once("end", function () {
-      console.log("Connection ended");
-    });
+    imap.once("end", function () {});
   });
 });
 
@@ -636,14 +358,17 @@ router.post("/getUser", async (req, res) => {
     const result = await GetUserService(req.body);
     res.status(200).send({ status: true, data: result });
   } catch (error) {
-    // console.log("ERROR: ", error);
     res.status(500).send({ error });
   }
 });
 
 router.post("/recipients", async (req, res) => {
-  const result = await RecipientsService(req.body);
-  res.status(200).send({ status: true, data: result });
+  try {
+    const result = await RecipientsService(req.body);
+    res.status(200).send({ status: true, data: result });
+  } catch (error) {
+    res.status(500).send({ status: false, error });
+  }
 });
 
 module.exports = router;

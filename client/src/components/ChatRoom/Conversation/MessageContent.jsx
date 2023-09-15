@@ -12,7 +12,6 @@ function MessageContent() {
   const { socket } = useOutletContext();
   const dispatch = useDispatch();
   const spreadEmail = [...email];
-  // console.log("EMAIL: ", state);
 
   const sortedArray = spreadEmail.sort((a, b) => {
     const dateA = new Date(a.header.date[0]);
@@ -20,43 +19,9 @@ function MessageContent() {
     return dateA - dateB;
   });
 
-  const debounce = (func, delay) => {
-    let timeoutId;
-
-    return function (...args) {
-      clearTimeout(timeoutId);
-
-      timeoutId = setTimeout(() => {
-        func.apply(this, args);
-      }, delay);
-    };
-  };
-
-  useEffect(() => {
-    // For realtime data for recipient
-    // const realtimeEmail = () => {
-    //   socket.on("receive_email", (data) => {
-    //     dispatch(addEmail(data));
-    //     console.log("RECEIVE_EMAIL: ", data);
-    //   });
-    // };
-
-    // debounce(realtimeEmail, 300);
-
-    socket.on("receive_email", (data) => {
-      dispatch(addEmail(data));
-      console.log("RECEIVE_EMAIL: ", data);
-    });
-  }, [socket]);
-
   useEffect(() => {
     setEmail(state.email);
-
-    // console.log("MESSAGE_CONTENT: ", state.email);
   }, [state.email]);
-
-  // console.log("SORTED: ", sortedArray);
-  // console.log("EMAIL: ", email);
 
   return (
     <ScrollToBottom className="scroll-to-bottom ">
@@ -91,10 +56,8 @@ function MessageContent() {
                   </div>
                   <div className="content__body">
                     <h1 className="content__subject">
-                      {/* FOR THIS SUBJECT, ADD A CONFIRMATION. If it is for group remove the _id (e.g: Group 1: 123125123) */}
                       {message?.header?.subject?.[0]}
                     </h1>
-                    {/* <pre className="content__message">{message.body}</pre> */}
                     <pre
                       className="content__message"
                       dangerouslySetInnerHTML={{ __html: message?.body }}

@@ -13,8 +13,6 @@ import { useOutletContext } from "react-router-dom";
 
 // RECEIVER's NOTIFICATION
 function Notification({ caller, sender }) {
-  // console.log("RECEIVER: ", caller, sender);
-
   const dispatch = useDispatch();
   const { socket } = useOutletContext();
 
@@ -23,7 +21,6 @@ function Notification({ caller, sender }) {
     socket.emit("ignore_call", caller);
   };
 
-  // HERE IS THE LAST TRACK: modify the on_accept socket and make it available also for call
   const acceptCall = () => {
     dispatch(showContactInfo());
     dispatch(setCaller(null));

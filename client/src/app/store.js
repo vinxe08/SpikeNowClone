@@ -1,11 +1,9 @@
 import { combineReducers, configureStore } from "@reduxjs/toolkit";
-// import counterReducer from "../features/counter/counterSlice";
 import loginReducer from "../features/login/loginSlice";
 import emailReducer from "../features/email/emailSlice";
 import showReducer from "../features/show/showSlice";
 import videoChatReducer from "../features/videochat/videochatSlice";
 import menuReducer from "../features/navigate/menuSlice";
-import mediaStream from "../features/stream/mediaStream";
 import storage from "redux-persist/lib/storage";
 import { persistReducer } from "redux-persist";
 import thunk from "redux-thunk";
@@ -22,7 +20,6 @@ const rootReducer = combineReducers({
   showReducer,
   videoChatReducer,
   menuReducer,
-  mediaStream,
 });
 
 const persistedReducer = persistReducer(persistConfig, rootReducer);

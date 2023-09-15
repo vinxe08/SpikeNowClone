@@ -9,6 +9,7 @@ import { FaLocationArrow } from "react-icons/fa";
 import CreatableSelect from "react-select/creatable";
 import { pushGroupEmail } from "../../features/email/emailSlice";
 import { useOutletContext } from "react-router-dom";
+import { Toast } from "../../lib/sweetalert";
 
 function Modal() {
   const dispatch = useDispatch();
@@ -21,7 +22,7 @@ function Modal() {
   const [options, setOptions] = useState(null);
   const user = useSelector((state) => state.emailReducer.user);
   const [error, setError] = useState("");
-  const date = new Date(); // Use your own Date object here if needed
+  const date = new Date();
 
   const filterContacts = (arrayContacts) => {
     const contacts = arrayContacts.map((contact) => ({
@@ -64,7 +65,7 @@ function Modal() {
   const fetchAllUsers = async () => {
     try {
       const response = await fetch(
-        "http://localhost:3001/conversation/retrieve",
+        `${process.env.REACT_APP_BACKEND_URL}${process.env.REACT_APP_CONVERSATION_GET}`,
         {
           method: "POST",
           headers: {
@@ -78,8 +79,10 @@ function Modal() {
       const data = await response.json();
       filterContacts(data);
     } catch (error) {
-      console.log("ERROR: ", error);
-      // Provide an error notification
+      Toast.fire({
+        icon: "error",
+        title: "Error. Try Again Later",
+      });
     }
   };
 
@@ -100,22 +103,25 @@ function Modal() {
     const filteredValue = value.map((data) => data.value);
     filteredValue.push(user.email);
     try {
-      const response = await fetch("http://localhost:3001/group/create", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          users: filteredValue,
-          groupName: groupInfo.groupName,
-          description: groupInfo.description,
-          background,
-          timestamp: formatDateToCustomString(date),
-        }),
-      });
+      const response = await fetch(
+        `${process.env.REACT_APP_BACKEND_URL}${process.env.REACT_APP_GROUP_CREATE}`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            users: filteredValue,
+            groupName: groupInfo.groupName,
+            description: groupInfo.description,
+            background,
+            timestamp: formatDateToCustomString(date),
+          }),
+        }
+      );
       const data = await response.json();
-      console.log("MODAL: ", data);
-      // Close modal
+
+      // Close modal & push this details
       if (data) {
         dispatch(setModal(false));
         dispatch(
@@ -138,15 +144,13 @@ function Modal() {
           timestamp: formatDateToCustomString(date),
           _id: data.response.group._id,
         });
-
-        console.log("SUCCES: ", data);
       }
     } catch (error) {
-      console.log("ERROR CREATE GROUP: ", error);
+      Toast.fire({
+        icon: "error",
+        title: "Error. Try Again Later",
+      });
     }
-    // add Loading
-    // send in db (value)
-    // display the group name in sidebar
   };
 
   useEffect(() => {
@@ -204,23 +208,7 @@ function Modal() {
             />
           </div>
         </div>
-
-        {/* <input
-          className="invite__field"
-          type="text"
-          placeholder="Invite People"
-        /> */}
-        {/* <div className="divider"></div> */}
         <div className="group__inviteRow">
-          {/* USER 1 */}
-          {/* <div className="group__usersRow">
-            <h1 className="group__usersAvatar">V</h1>
-            <div className="group__userInfo">
-              <h1 className="group__userName">My Name</h1>
-              <h1 className="group__userEmail">myemail@email.com</h1>
-            </div>
-          </div> */}
-
           {/* REACT-SELECT */}
           {options ? (
             <CreatableSelect

@@ -15,7 +15,6 @@ export const emailSlice = createSlice({
   initialState,
   reducers: {
     getAllEmail: (state, action) => {
-      // console.log("PAYLOAD: ", action.payload);
       const modifyEmail = (emailHeader) => {
         const from = emailHeader.header.from;
         const to = emailHeader.header.to;
@@ -32,7 +31,6 @@ export const emailSlice = createSlice({
 
           from.splice(0, 1, outputFrom);
         } else {
-          // console.log("ELSE FROM: ", emailHeader);
           from.splice(0, 1, { email: from[0] });
         }
 
@@ -42,11 +40,9 @@ export const emailSlice = createSlice({
 
           const outputTo = { name: nameTo, email: emailTo };
           to.splice(0, 1, outputTo);
-          // console.log(output); // PUT THIS IN email.header.from[0]
 
           return emailHeader;
         } else {
-          // console.log("ELSE TO: ", emailHeader);
           to.splice(0, 1, { email: to[0] });
           return emailHeader;
         }
@@ -63,11 +59,8 @@ export const emailSlice = createSlice({
           return modifyEmail(emailHeader);
         });
 
-      // console.log("EMAIL: ", emails, sentBox);
       state.allEmail = [...emails, ...sentBox];
-      // state.allEmail = { email: emails, sent: sentBox };
     },
-    // for selected email
     getEmail: (state, action) => {
       state.email = action.payload;
     },

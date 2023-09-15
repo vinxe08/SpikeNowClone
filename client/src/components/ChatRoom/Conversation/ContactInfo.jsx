@@ -1,7 +1,6 @@
-import React, { useEffect } from "react";
+import React from "react";
 import { IoIosArrowForward, IoIosArrowBack } from "react-icons/io";
 import { IoSearchOutline } from "react-icons/io5";
-import { HiOutlineVideoCamera } from "react-icons/hi";
 import { BsArchive, BsThreeDotsVertical, BsCameraVideo } from "react-icons/bs";
 import "./ContactInfo.css";
 import { useSelector, useDispatch } from "react-redux";
@@ -11,8 +10,6 @@ function ContactInfo() {
   const state = useSelector((state) => state.emailReducer);
   const dispatch = useDispatch();
   const hasType = state.email.filter((item) => item.header.type);
-
-  // console.log("STATE : ", state.email);
 
   return (
     <div className="ContactInfo">
