@@ -6,5 +6,8 @@ export const connectionError = (err) => {
       icon: "error",
       title: "Connection Error. Reload to restore Connection",
     });
+    setTimeout(() => {
+      window.location.reload();
+    }, 3000);
   }
 };

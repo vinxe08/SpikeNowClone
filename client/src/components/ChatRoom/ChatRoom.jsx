@@ -89,7 +89,7 @@ function ChatRoom() {
 
   useEffect(() => {
     fetchUserInfo();
-  }, [modal]);
+  }, []);
 
   useEffect(() => {
     if (!state.user) {
@@ -118,8 +118,6 @@ function ChatRoom() {
       dispatch(setCaller(data));
     });
   }, [socket]);
-
-  // TODO 2: index.js or server in deployment, remove the limit. Line 102-105
 
   return (
     <div className="ChatRoom">

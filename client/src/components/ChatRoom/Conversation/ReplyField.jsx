@@ -62,7 +62,6 @@ function ReplyField() {
       },
     });
 
-    // // TODO: MESSAGES WILL NOT SEND VIA SOCKET IF THE CONVO IS NOT OPEN
     try {
       const response = await fetch(
         `${process.env.REACT_APP_BACKEND_URL}${process.env.REACT_APP_CONVERSATION_SEND}`,

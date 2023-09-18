@@ -15,6 +15,7 @@ import {
   setToggle,
 } from "../../../features/email/emailSlice";
 import { useOutletContext } from "react-router-dom";
+import { connectionError } from "../../../lib/connectionError";
 
 function GroupList() {
   const user = useSelector((state) => state.emailReducer.user);
@@ -23,6 +24,7 @@ function GroupList() {
   const dispatch = useDispatch();
   const state = useSelector((state) => state.emailReducer);
   const [emailState, setEmailState] = useState(state);
+  const [emails, setEmails] = useState([]);
   const { socket } = useOutletContext();
 
   const groupSet = new Set(
@@ -43,7 +45,14 @@ function GroupList() {
     );
 
     return {
-      ...data,
+      body: data.body,
+      header: {
+        date: data.header.date,
+        from: data.header.from,
+        to: myGroup[0].users.filter((mail) => mail !== state.user.email),
+        subject: data.header.subject,
+        type: "group",
+      },
       data: myGroup[0],
     };
   });
@@ -73,6 +82,10 @@ function GroupList() {
   });
 
   const onMessageSelect = (email) => {
+    const samp = emails.filter(
+      (item) => item.header.subject[0] === email.header.subject[0]
+    );
+
     dispatch(setToggle("group"));
     dispatch(
       setReciever([
@@ -92,8 +105,11 @@ function GroupList() {
         },
       ])
     );
-    dispatch(getEmail([email]));
-
+    if (samp.length > 0) {
+      dispatch(getEmail(samp));
+    } else {
+      dispatch(getEmail([email]));
+    }
     socket.emit("select_conversation", email.data._id);
   };
 
@@ -125,7 +141,41 @@ function GroupList() {
 
   useEffect(() => {
     setResults(noEmail);
+    setEmails(groupedEmail);
   }, []);
+
+  useEffect(() => {
+    const handleIncomingEmail = (newEmail) => {
+      const samp = groupedEmail.filter(
+        (item) => item.header.subject[0] === newEmail.header.subject[0]
+      );
+      const groupReceiver = newEmail.header.to[0].split(", ");
+
+      // Check if it is for group or it has more than 1 receiver
+      if (groupReceiver) {
+        if (
+          newEmail.header.subject[0] === samp[0].header.subject[0] ||
+          newEmail.header.subject[0] === samp[1].header.subject[0]
+        ) {
+          dispatch(getEmail([...samp, newEmail]));
+        }
+
+        // groupedEmail.push(newEmail); // not wroking
+        // setEmails((prevState) => {
+        //   return [...prevState, newEmail];
+        // });
+        setEmails([...groupedEmail, newEmail]);
+      }
+    };
+
+    socket.on("new email", handleIncomingEmail);
+    socket.on("connection error", connectionError);
+
+    return () => {
+      socket.off("new email", handleIncomingEmail);
+      socket.off("connection error", connectionError);
+    };
+  }, [socket]);
 
   return (
     <div className="GroupList">
