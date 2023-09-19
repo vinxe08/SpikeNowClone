@@ -1,4 +1,6 @@
 const express = require("express");
+const dotenv = require("dotenv");
+dotenv.config();
 const bodyParser = require("body-parser");
 const app = express();
 const http = require("http");
@@ -32,6 +34,8 @@ let requestID;
 const users = {};
 const socketToRoom = {};
 const loggedUsers = [];
+
+const port = process.env.PORT || 3001;
 
 io.on("connection", (socket) => {
   // For user logged in
@@ -160,18 +164,19 @@ io.on("connection", (socket) => {
 });
 
 // Database connection in MongoDB
-const dbConfig = "mongodb://localhost:27017";
-const dbName = "spike-clone";
+// const dbConfig = "mongodb://localhost:27017";
+// const dbName = "spike-clone";
+console.log("MONGO URI: ", process.env.MONGO_URI, process.env.PORT);
 
-mongoose.connect(`${dbConfig}/${dbName}`, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-});
-
-server
-  .listen(3001, () => {
-    console.log("SERVER IS RUNNING");
+mongoose
+  .connect(`${process.env.MONGO_URI}`, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
   })
-  .on("error", (err) => {
-    console.log("SERVER ERROR: ", err);
+  .catch((err) => {
+    console.log("MONGO ERROR: ", err);
   });
+
+server.listen(port, () => {
+  console.log("SERVER IS RUNNING");
+});
