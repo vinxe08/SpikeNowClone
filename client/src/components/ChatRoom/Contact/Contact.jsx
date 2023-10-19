@@ -22,6 +22,7 @@ function Contact() {
   const recipients = useSelector((state) => state.emailReducer.recipients);
   const isCalling = useSelector((state) => state.showReducer.isCalling);
   const type = useSelector((state) => state.showReducer.type);
+  const user = useSelector((state) => state.emailReducer.user);
   const [recipient, setRecipient] = useState();
 
   const [sendCall, setSendCall] = useState(null);
@@ -51,11 +52,13 @@ function Contact() {
     dispatch(setIsCalling(true));
 
     if (type === "Video Call") {
+      console.log("Video Call");
       setSendCall({
         id: recipient[0]._id, // ERROR: No ._id
         name: state[0].header.to[0]?.name,
         email: state[0].header.to[0]?.email,
         type: "Video Call",
+        caller: user.email,
       });
       dispatch(setType("Video Call"));
 
@@ -64,6 +67,7 @@ function Contact() {
         name: state[0].header.to[0]?.name,
         email: state[0].header.to[0]?.email,
         type: "Video Call",
+        caller: user.email,
       });
     } else {
       setSendCall({
@@ -71,6 +75,7 @@ function Contact() {
         name: state[0].header.to[0]?.name,
         email: state[0].header.to[0]?.email,
         type: "Voice Call",
+        caller: user.email,
       });
       dispatch(setType("Voice Call"));
 
@@ -79,6 +84,7 @@ function Contact() {
         name: state[0].header.to[0]?.name,
         email: state[0].header.to[0]?.email,
         type: "Voice Call",
+        caller: user.email,
       });
     }
   };

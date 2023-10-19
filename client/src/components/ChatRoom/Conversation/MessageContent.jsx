@@ -1,16 +1,12 @@
 import React, { useEffect, useState } from "react";
-import { useDispatch, useSelector } from "react-redux";
+import { useSelector } from "react-redux";
 import "./MessageContent.css";
 import TimeAgo from "react-timeago";
-import { useOutletContext } from "react-router-dom";
-import { addEmail } from "../../../features/email/emailSlice";
 import ScrollToBottom from "react-scroll-to-bottom";
 
 function MessageContent() {
   const state = useSelector((state) => state.emailReducer);
   const [email, setEmail] = useState([]);
-  const { socket } = useOutletContext();
-  const dispatch = useDispatch();
   const spreadEmail = [...email];
 
   const sortedArray = spreadEmail.sort((a, b) => {

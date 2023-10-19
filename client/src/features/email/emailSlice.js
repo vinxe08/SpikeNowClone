@@ -8,6 +8,7 @@ const initialState = {
   groupEmail: [],
   toggle: false,
   receiver: null,
+  mailNotification: [],
 };
 
 export const emailSlice = createSlice({
@@ -61,6 +62,9 @@ export const emailSlice = createSlice({
 
       state.allEmail = [...emails, ...sentBox];
     },
+    addAllEmail: (state, action) => {
+      state.allEmail.push(action.payload);
+    },
     getEmail: (state, action) => {
       state.email = action.payload;
     },
@@ -85,11 +89,40 @@ export const emailSlice = createSlice({
     setReciever: (state, action) => {
       state.receiver = action.payload;
     },
+    pushNotification: (state, action) => {
+      if (!Array.isArray(state.mailNotification)) {
+        state.mailNotification = [];
+      }
+
+      if (!state.mailNotification.includes(action.payload)) {
+        state.mailNotification.push(action.payload);
+      }
+    },
+    removeNotification: (state, action) => {
+      if (
+        Array.isArray(state.mailNotification) &&
+        state.mailNotification.find(
+          (notif) =>
+            notif.name === action.payload.name &&
+            notif.type === action.payload.type
+        )
+      ) {
+        state.mailNotification.splice(
+          state.mailNotification.findIndex(
+            (notif) =>
+              notif.name === action.payload.name &&
+              notif.type === action.payload.type
+          ),
+          1
+        );
+      }
+    },
   },
 });
 
 export const {
   getAllEmail,
+  addAllEmail,
   getEmail,
   addEmail,
   setUser,
@@ -98,6 +131,8 @@ export const {
   setToggle,
   setReciever,
   pushGroupEmail,
+  pushNotification,
+  removeNotification,
 } = emailSlice.actions;
 
 export default emailSlice.reducer;

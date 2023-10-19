@@ -17,14 +17,14 @@ const getIncomingEmail = (mail, user) => {
   if (!io) {
     throw new Error("Socket.IO has not been initialized yet.");
   }
-  const groupReceiver = mail.header.to[0].split(", ");
-  const getReceiver = mail.header.to[0].match(/<([^>]+)>/)?.[1];
+  const groupReceiver = mail[0].header.to[0].split(", ");
+  const getReceiver = mail[0].header.to[0].match(/<([^>]+)>/)?.[1];
 
-  if (groupReceiver.length > 0) {
+  if (groupReceiver.length > 1) {
     // This will trigger twice because two user has new email
-    io.to(`${mail.header.subject[0]} - ${user}`).emit("new email", mail);
+    io.to(`${mail[0].header.subject[0]} - ${user}`).emit("new email", mail);
   } else {
-    io.to(getReceiver || mail.header.to[0]).emit("new email", mail);
+    io.to(getReceiver || mail[0].header.to[0]).emit("new email", mail);
   }
 };
 

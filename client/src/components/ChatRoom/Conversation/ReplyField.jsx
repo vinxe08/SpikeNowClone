@@ -1,12 +1,11 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import "./ReplyField.css";
 import { BiExpandAlt, BiSmile } from "react-icons/bi";
 import { AiOutlinePlusCircle } from "react-icons/ai";
 import { MdElectricBolt } from "react-icons/md";
 import { FaComment } from "react-icons/fa";
 import { useDispatch, useSelector } from "react-redux";
-import { addEmail } from "../../../features/email/emailSlice";
-import { useOutletContext } from "react-router-dom";
+import { addAllEmail, addEmail } from "../../../features/email/emailSlice";
 import Swal from "sweetalert2";
 import { Toast } from "../../../lib/sweetalert";
 
@@ -35,7 +34,7 @@ function ReplyField() {
     // FOR GROUP EMAIL
     if (state.email[0].header.type === "group") {
       setReceiver(
-        state.email[0].header.to.filter((mail) => mail !== state.user.email)
+        state.email[0].data.users.filter((mail) => mail !== state.user.email)
       );
       setSubject(state.email[0].header.subject[0]);
     }
@@ -64,7 +63,7 @@ function ReplyField() {
 
     try {
       const response = await fetch(
-        `${process.env.REACT_APP_BACKEND_URL}${process.env.REACT_APP_CONVERSATION_SEND}`,
+        `/${process.env.REACT_APP_CONVERSATION_SEND}`,
         {
           method: "POST",
           headers: {
@@ -80,15 +79,26 @@ function ReplyField() {
       );
       const data = await response.json();
 
-      if (data) {
+      if (!data.error) {
         dispatch(
           addEmail({
             body: message,
             header: {
               date: [formatDateToCustomString(new Date())],
-              from: [state.user.email],
-              subject,
-              to: [receiver],
+              from: [{ email: state.user.email }],
+              subject: [subject],
+              to: [{ email: receiver }],
+            },
+          })
+        );
+        dispatch(
+          addAllEmail({
+            body: message,
+            header: {
+              date: [formatDateToCustomString(new Date())],
+              from: [{ email: state.user.email }],
+              subject: [subject],
+              to: [{ email: receiver }],
             },
           })
         );
@@ -98,8 +108,15 @@ function ReplyField() {
           icon: "success",
           title: "Message sent",
         });
+      } else {
+        Swal.close();
+        Toast.fire({
+          icon: "error",
+          title: "Something is wrong. Try Again",
+        });
       }
     } catch (error) {
+      console.log("ERROR: ReplyField -> ", error);
       Swal.close();
       Toast.fire({
         icon: "error",
@@ -130,7 +147,9 @@ function ReplyField() {
                     ""
                   )
                 : state.email?.[0]?.header?.from?.[0]?.name ||
-                  state.email?.[0]?.header?.subject[0]
+                  state.email?.[0]?.header?.from?.[0]?.email ||
+                  state.email?.[0]?.header?.subject?.[0] ||
+                  "User"
             }`}
           />
           <input hidden type="submit" disabled={message === ""} />

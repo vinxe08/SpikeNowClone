@@ -50,6 +50,15 @@
   padding: 0 1rem 1rem 1rem;
 }
 
+.empty__fields {
+  font-size: 1rem;
+  padding: 0.5rem;
+  color: white;
+  background: rgb(253, 70, 106);
+  border-radius: 10px;
+  margin-bottom: 5px;
+}
+
 .registration__field {
   border: 0.5px solid rgb(238, 238, 238);
   border-radius: 7px;

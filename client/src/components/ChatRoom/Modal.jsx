@@ -65,7 +65,7 @@ function Modal() {
   const fetchAllUsers = async () => {
     try {
       const response = await fetch(
-        `${process.env.REACT_APP_BACKEND_URL}${process.env.REACT_APP_CONVERSATION_GET}`,
+        `/${process.env.REACT_APP_CONVERSATION_GET}`,
         {
           method: "POST",
           headers: {
@@ -103,22 +103,19 @@ function Modal() {
     const filteredValue = value.map((data) => data.value);
     filteredValue.push(user.email);
     try {
-      const response = await fetch(
-        `${process.env.REACT_APP_BACKEND_URL}${process.env.REACT_APP_GROUP_CREATE}`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            users: filteredValue,
-            groupName: groupInfo.groupName,
-            description: groupInfo.description,
-            background,
-            timestamp: formatDateToCustomString(date),
-          }),
-        }
-      );
+      const response = await fetch(`${process.env.REACT_APP_GROUP_CREATE}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          users: filteredValue,
+          groupName: groupInfo.groupName,
+          description: groupInfo.description,
+          background,
+          timestamp: formatDateToCustomString(date),
+        }),
+      });
       const data = await response.json();
 
       // Close modal & push this details
@@ -144,8 +141,13 @@ function Modal() {
           timestamp: formatDateToCustomString(date),
           _id: data.response.group._id,
         });
+        Toast.fire({
+          icon: "success",
+          title: "New Group",
+        });
       }
     } catch (error) {
+      console.log("ERROR createGroup: ", error);
       Toast.fire({
         icon: "error",
         title: "Error. Try Again Later",

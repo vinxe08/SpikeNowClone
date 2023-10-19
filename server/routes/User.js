@@ -3,6 +3,7 @@ const router = express.Router();
 const Imap = require("imap"),
   inspect = require("util").inspect;
 const simpleParser = require("mailparser").simpleParser;
+// const process = require("process");
 
 const { getIncomingEmail, connectionError } = require("../lib/socketManager");
 
@@ -13,7 +14,7 @@ const GroupServices = require("../services/GroupConversation/Retrieve");
 
 // Sends the new email from server to socket to client
 const fetchNewEmail = (newEmail, email) => {
-  getIncomingEmail(newEmail[0], email);
+  getIncomingEmail(newEmail, email);
 };
 
 router.post("/users", async (req, res) => {
@@ -28,8 +29,6 @@ router.post("/users", async (req, res) => {
     tls: true,
     socketTimeout: 30000,
   });
-
-  im.connect();
 
   im.once("error", (err) => {
     // Handles the connection error
@@ -133,6 +132,8 @@ router.post("/users", async (req, res) => {
 
   im.once("end", function () {});
 
+  im.connect();
+
   // ----------------------- FOR EMAIL & REPLY ---------------------
   // IMAP configuration
   const imap = new Imap({
@@ -143,8 +144,6 @@ router.post("/users", async (req, res) => {
     tls: true,
     socketTimeout: 30000,
   });
-
-  imap.connect();
 
   imap.once("error", (err) => {
     if (!res.headersSent) {
@@ -350,6 +349,13 @@ router.post("/users", async (req, res) => {
     });
 
     imap.once("end", function () {});
+
+    imap.connect();
+  });
+  process.on("beforeExit", function () {
+    im.end();
+    imap.end(); // Close the IMAP connection
+    process.exit(); // Exit the Node.js process
   });
 });
 

@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React from "react";
 import "./LoginRoute.css";
 import WelcomePage from "./LoginPage/WelcomePage";
 import { useSelector } from "react-redux";

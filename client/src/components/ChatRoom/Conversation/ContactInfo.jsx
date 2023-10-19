@@ -21,13 +21,16 @@ function ContactInfo() {
         className="contact__info"
       >
         <h1 className="contact__name">
+          {/* ISSUE: hasType[0].data._id -> ._id is undefined */}
           {hasType.length > 0
             ? hasType[0].header.subject[0].replace(
                 `: ${hasType[0].data._id}`,
                 ""
               )
             : state.email?.[0]?.header?.from?.[0]?.name ||
-              state.email?.[0]?.header?.subject[0]}
+              state.email?.[0]?.header?.from?.[0]?.email ||
+              state.email?.[0]?.header?.subject?.[0] ||
+              "User"}
         </h1>
         <div className="contact__select">
           <h1 className="contact__text">Contact Info</h1>

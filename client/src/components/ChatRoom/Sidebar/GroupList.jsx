@@ -10,15 +10,17 @@ import { useDispatch, useSelector } from "react-redux";
 import { setModal } from "../../../features/navigate/menuSlice";
 import {
   getEmail,
+  pushNotification,
+  removeNotification,
   setReciever,
   setRecipient,
   setToggle,
 } from "../../../features/email/emailSlice";
 import { useOutletContext } from "react-router-dom";
 import { connectionError } from "../../../lib/connectionError";
+import { debounce } from "../../../lib/debounce";
 
 function GroupList() {
-  const user = useSelector((state) => state.emailReducer.user);
   const modal = useSelector((state) => state.menuReducer.modalCreate);
   const [results, setResults] = useState([]);
   const dispatch = useDispatch();
@@ -26,6 +28,7 @@ function GroupList() {
   const [emailState, setEmailState] = useState(state);
   const [emails, setEmails] = useState([]);
   const { socket } = useOutletContext();
+  const [newNotif, setNewNotif] = useState([]);
 
   const groupSet = new Set(
     emailState.groupEmail.map((item) => `${item.groupName}: ${item._id}`)
@@ -66,7 +69,6 @@ function GroupList() {
       const recipient = data.users.filter(
         (name) => name !== emailState.user.email
       );
-      const to = recipient.join(", ");
 
       return {
         data,
@@ -74,7 +76,8 @@ function GroupList() {
           from: [{ email: emailState.user.email }],
           date: [data.timestamp],
           subject: [`${data.groupName}: ${data._id}`],
-          to: [{ email: `${to}` }],
+          // to: [{ email: `${to}` }],
+          to: recipient,
           type: "group",
         },
       };
@@ -82,6 +85,9 @@ function GroupList() {
   });
 
   const onMessageSelect = (email) => {
+    // TRY TO REMOVE ALSO IN newNotif state
+    dispatch(removeNotification(email.header.subject[0]));
+
     const samp = emails.filter(
       (item) => item.header.subject[0] === email.header.subject[0]
     );
@@ -106,12 +112,71 @@ function GroupList() {
       ])
     );
     if (samp.length > 0) {
-      dispatch(getEmail(samp));
+      const mails = samp.map((mail) => {
+        return {
+          data: email.data,
+          body: mail.body,
+          header: mail.header,
+        };
+      });
+      dispatch(getEmail(mails));
     } else {
       dispatch(getEmail([email]));
     }
     socket.emit("select_conversation", email.data._id);
   };
+
+  const handleIncomingEmail = debounce((mails) => {
+    mails?.map((newEmail) => {
+      const groupReceiver = newEmail.header.to[0].split(", ");
+
+      // Check if it is for group or it has more than 1 receiver
+      if (
+        groupReceiver.length > 1 &&
+        !state.email.some(
+          (data) =>
+            data.body === newEmail.body &&
+            data.header.date[0] === newEmail.header.date[0]
+        )
+      ) {
+        if (
+          state.email.length > 0 &&
+          state.email[0].header.subject[0] === newEmail.header.subject[0]
+        ) {
+          // try to add the the
+          dispatch(getEmail([...state.email, newEmail]));
+        }
+
+        if (
+          state.email.length === 0 &&
+          !state.mailNotification.includes(newEmail.header.subject[0])
+        ) {
+          dispatch(
+            pushNotification({
+              name: newEmail.header.subject[0],
+              type: "group",
+            })
+          );
+        }
+
+        setEmails((prevEmail) => {
+          return [
+            ...prevEmail,
+            {
+              body: newEmail.body,
+              header: {
+                date: newEmail.header.date,
+                from: newEmail.header.from,
+                subject: newEmail.header.subject,
+                to: newEmail.header.to,
+                type: "group",
+              },
+            },
+          ];
+        });
+      }
+    });
+  }, 1000);
 
   useEffect(() => {
     setEmailState(state);
@@ -122,7 +187,7 @@ function GroupList() {
       const recipient = data.users.filter(
         (name) => name !== emailState.user.email
       );
-      const to = recipient.join(", ");
+
       setResults((prevResult) => [
         ...prevResult,
         {
@@ -131,7 +196,8 @@ function GroupList() {
             from: [{ email: emailState.user.email }],
             date: [data.timestamp],
             subject: [`${data.groupName}: ${data._id}`],
-            to: [{ email: `${to}` }],
+            // to: [{ email: `${to}` }],
+            to: recipient,
             type: "group",
           },
         },
@@ -145,29 +211,6 @@ function GroupList() {
   }, []);
 
   useEffect(() => {
-    const handleIncomingEmail = (newEmail) => {
-      const samp = groupedEmail.filter(
-        (item) => item.header.subject[0] === newEmail.header.subject[0]
-      );
-      const groupReceiver = newEmail.header.to[0].split(", ");
-
-      // Check if it is for group or it has more than 1 receiver
-      if (groupReceiver) {
-        if (
-          newEmail.header.subject[0] === samp[0].header.subject[0] ||
-          newEmail.header.subject[0] === samp[1].header.subject[0]
-        ) {
-          dispatch(getEmail([...samp, newEmail]));
-        }
-
-        // groupedEmail.push(newEmail); // not wroking
-        // setEmails((prevState) => {
-        //   return [...prevState, newEmail];
-        // });
-        setEmails([...groupedEmail, newEmail]);
-      }
-    };
-
     socket.on("new email", handleIncomingEmail);
     socket.on("connection error", connectionError);
 
@@ -175,7 +218,11 @@ function GroupList() {
       socket.off("new email", handleIncomingEmail);
       socket.off("connection error", connectionError);
     };
-  }, [socket]);
+  }, [socket, results, state.email]);
+
+  useEffect(() => {
+    setNewNotif(state.mailNotification);
+  }, [state.mailNotification]);
 
   return (
     <div className="GroupList">
@@ -194,6 +241,11 @@ function GroupList() {
               key={result.header.date[0]}
               className="group__iconrow"
             >
+              {Array.isArray(newNotif) &&
+              newNotif.length > 0 &&
+              newNotif.includes(result.header.subject[0]) ? (
+                <h1 className="new__mailNotif">New mail</h1>
+              ) : null}
               <div
                 className={`group__userAvatar icon__white ${result.data.background}`}
               >

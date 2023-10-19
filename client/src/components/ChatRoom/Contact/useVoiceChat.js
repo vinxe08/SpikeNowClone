@@ -4,6 +4,7 @@ import Peer from "simple-peer";
 import io from "socket.io-client";
 import { setIsCalling } from "../../../features/show/showSlice";
 import { Toast } from "../../../lib/sweetalert";
+import { getTurnCredentials } from "../../../lib/twilio";
 
 export function useVoiceChat() {
   const dispatch = useDispatch();
@@ -11,101 +12,129 @@ export function useVoiceChat() {
   const socketRef = useRef();
   const userVoice = useRef();
   const peersRef = useRef([]);
+  const [iceServers, setIceServers] = useState([]); // ADDITION
 
   const user = useSelector((state) => state.emailReducer.user.email);
   const recipient = useSelector((state) => state.emailReducer.recipients);
 
+  // ADDITION
+  const fetchTurn = async () => {
+    try {
+      const data = await getTurnCredentials();
+      console.log("TURN CRED.: ", data);
+      setIceServers(data.token.iceServers);
+    } catch (error) {
+      console.log("TURN CRED ERROR: ", error);
+      setIceServers({ error });
+    }
+  };
+
   useEffect(() => {
-    window.addEventListener("beforeunload", leaveCall);
+    fetchTurn(); // ADDITION
+  }, []);
 
-    socketRef.current = io.connect(`${process.env.REACT_APP_SOCKET}`);
-    navigator.mediaDevices
-      .getUserMedia({ audio: true })
-      .then((stream) => {
-        if (userVoice.current) {
-          userVoice.current.srcObject = stream;
-        }
-        // REGISTER IN SERVER - USER TO RECEIVER
-        socketRef.current.emit("join room", {
-          roomID: recipient[0]._id,
-          user,
-        });
+  useEffect(() => {
+    if (iceServers.length > 0) {
+      window.addEventListener("beforeunload", leaveCall);
 
-        // GET ALL THE USER's PEER in SERVER
-        socketRef.current.on("all users", (users) => {
-          const peers = [];
-          users.forEach((user) => {
-            const peer = createPeer(user.userID, socketRef.current.id, stream);
-            peersRef.current.push({
-              peerID: user.userID,
-              peer,
-              user: user.user,
+      socketRef.current = io.connect(`${process.env.REACT_APP_SOCKET}`, {
+        withCredentials: true,
+      });
+      navigator.mediaDevices
+        .getUserMedia({ audio: true })
+        .then((stream) => {
+          if (userVoice.current) {
+            userVoice.current.srcObject = stream;
+          }
+          // REGISTER IN SERVER - USER TO RECEIVER
+          socketRef.current.emit("join room", {
+            roomID: recipient[0]._id,
+            user,
+          });
+
+          // GET ALL THE USER's PEER in SERVER
+          socketRef.current.on("all users", (users) => {
+            const peers = [];
+            users.forEach((user) => {
+              const peer = createPeer(
+                user.userID,
+                socketRef.current.id,
+                stream
+              );
+              peersRef.current.push({
+                peerID: user.userID,
+                peer,
+                user: user.user,
+              });
+              peers.push({ peer, user: user.user, peerID: user.userID });
             });
-            peers.push({ peer, user: user.user, peerID: user.userID });
-          });
-          setPeers(peers);
-        });
-
-        // ADD's THE INCOMING PEER/USER
-        socketRef.current.on("user joined", (payload) => {
-          const peer = addPeer(payload.signal, payload.callerID, stream);
-          peersRef.current.push({
-            peerID: payload.callerID,
-            peer,
-            user: payload.user,
+            setPeers(peers);
           });
 
-          setPeers((users) => [
-            ...users,
-            { peer, user: payload.user, peerID: payload.callerID },
-          ]);
-        });
+          // ADD's THE INCOMING PEER/USER
+          socketRef.current.on("user joined", (payload) => {
+            const peer = addPeer(payload.signal, payload.callerID, stream);
+            peersRef.current.push({
+              peerID: payload.callerID,
+              peer,
+              user: payload.user,
+            });
 
-        socketRef.current.on("receiving returned signal", (payload) => {
-          const item = peersRef.current.find((p) => p.peerID === payload.id);
-          setTimeout(() => {
+            setPeers((users) => [
+              ...users,
+              { peer, user: payload.user, peerID: payload.callerID },
+            ]);
+          });
+
+          socketRef.current.on("receiving returned signal", (payload) => {
+            const item = peersRef.current.find((p) => p.peerID === payload.id);
+
+            // setTimeout(() => {
+            //   item.peer.signal(payload.signal);
+            // }, 1000);
+
             item.peer.signal(payload.signal);
-          }, 1000);
+          });
+
+          socketRef.current.on("user left", (id) => {
+            const peerObj = peersRef.current.find((p) => p.peerID === id);
+
+            if (peerObj) {
+              peerObj.peer.destoy();
+            }
+
+            const peers = peersRef.current.filter((p) => p.peerID !== id);
+            peersRef.current = peers;
+            setPeers(peers);
+          });
+        })
+        .catch((error) => {
+          console.log("GET USER MEDIA: ", error);
+          Toast.fire({
+            icon: "error",
+            title: "Error. Try Again Later",
+          });
         });
 
-        socketRef.current.on("user left", (id) => {
-          const peerObj = peersRef.current.find((p) => p.peerID === id);
+      const userVoiceRef = userVoice.current;
 
-          if (peerObj) {
-            peerObj.peer.destoy();
+      return () => {
+        // FOR CLEAN UP
+        if (userVoiceRef) {
+          const stream = userVoiceRef.srcObject;
+          if (stream) {
+            // Stop the media stream
+            const tracks = stream.getTracks();
+            tracks.forEach((track) => track.stop());
           }
 
-          const peers = peersRef.current.filter((p) => p.peerID !== id);
-          peersRef.current = peers;
-          setPeers(peers);
-        });
-      })
-      .catch((error) => {
-        console.log(error);
-        Toast.fire({
-          icon: "error",
-          title: "Error. Try Again Later",
-        });
-      });
-
-    const userVoiceRef = userVoice.current;
-
-    return () => {
-      // FOR CLEAN UP
-      if (userVoiceRef) {
-        const stream = userVoiceRef.srcObject;
-        if (stream) {
-          // Stop the media stream
-          const tracks = stream.getTracks();
-          tracks.forEach((track) => track.stop());
+          userVoiceRef.srcObject = null;
         }
 
-        userVoiceRef.srcObject = null;
-      }
-
-      window.removeEventListener("beforeunload", leaveCall);
-    };
-  }, []);
+        window.removeEventListener("beforeunload", leaveCall);
+      };
+    }
+  }, [iceServers]);
 
   // Create a PEER Connection and send in SERVER
   function createPeer(userToSignal, callerID, stream) {
@@ -113,9 +142,13 @@ export function useVoiceChat() {
       initiator: true,
       trickle: false,
       stream,
+      config: {
+        iceServers: [...iceServers, { url: "stun:stun.1und1.de:3478" }], // ADDITION
+      },
     });
 
     peer.on("signal", (signal) => {
+      console.log("CP-SIGNAL");
       socketRef.current.emit("sending signal", {
         userToSignal,
         callerID,
@@ -125,7 +158,7 @@ export function useVoiceChat() {
     });
 
     peer.on("error", (err) => {
-      console.log(err);
+      console.log("CREATE PEER ERROR: ", err);
       Toast.fire({
         icon: "error",
         title: "Error. Try Again Later",
@@ -140,6 +173,9 @@ export function useVoiceChat() {
       initiator: false,
       trickle: false,
       stream,
+      config: {
+        iceServers: [...iceServers, { url: "stun:stun.1und1.de:3478" }], // ADDITION
+      },
     });
 
     // ADD ALL THE PEER THAT IS IN SERVER EXCLUDE ME/USER
@@ -148,16 +184,18 @@ export function useVoiceChat() {
     });
 
     peer.on("error", (err) => {
-      console.log(err);
+      console.log("ADD PEER ERROR: ", err);
       Toast.fire({
         icon: "error",
         title: "Error. Try Again Later",
       });
     });
 
-    setTimeout(() => {
-      peer.signal(incomingSignal);
-    }, 1000);
+    // setTimeout(() => {
+    //   peer.signal(incomingSignal);
+    // }, 1000);
+
+    peer.signal(incomingSignal);
 
     return peer;
   }

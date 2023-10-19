@@ -166,7 +166,6 @@ io.on("connection", (socket) => {
 // Database connection in MongoDB
 // const dbConfig = "mongodb://localhost:27017";
 // const dbName = "spike-clone";
-console.log("MONGO URI: ", process.env.MONGO_URI, process.env.PORT);
 
 mongoose
   .connect(`${process.env.MONGO_URI}`, {

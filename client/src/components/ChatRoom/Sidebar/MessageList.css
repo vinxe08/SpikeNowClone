@@ -12,10 +12,22 @@ h1 {
   min-width: 15rem;
   /* overflow-y: ; */
   overflow-x: hidden;
+
+  position: relative;
 }
 
 .MessageList:hover {
   background: rgb(243, 243, 243);
+}
+
+.new__mailNotif {
+  font-size: 0.5rem;
+  padding: 2px;
+  background: rgb(0, 81, 255);
+  color: white;
+  position: absolute;
+  top: 10px;
+  right: 10px;
 }
 
 .message__avatar {

@@ -3,7 +3,9 @@ import { useSelector } from "react-redux";
 import { Outlet, Navigate } from "react-router-dom";
 import io from "socket.io-client";
 
-const socket = io.connect(`${process.env.REACT_APP_SOCKET}`);
+const socket = io.connect(`${process.env.REACT_APP_SOCKET}`, {
+  withCredentials: true,
+});
 
 function RootLayout() {
   const [username, setUsername] = useState("");

@@ -10,6 +10,8 @@ import { useNavigate, useOutletContext } from "react-router-dom";
 import {
   getAllEmail,
   getEmail,
+  pushGroupEmail,
+  pushNotification,
   setGroupEmail,
   setToggle,
 } from "../../features/email/emailSlice";
@@ -37,21 +39,19 @@ function ChatRoom() {
   const menu = useSelector((state) => state.menuReducer.menu);
   const modal = useSelector((state) => state.menuReducer.modalCreate);
   const [loading, setLoading] = useState(false);
+  console.log("CALLER: ", caller);
 
   const fetchUserInfo = async () => {
     setLoading(true);
     try {
       // Fetch the User's Information and all Email.
-      const response = await fetch(
-        `${process.env.REACT_APP_BACKEND_URL}${process.env.REACT_APP_API_USERS}`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(state.user),
-        }
-      );
+      const response = await fetch(`/${process.env.REACT_APP_API_USERS}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(state.user),
+      });
       const data = await response.json();
 
       if (!data.userExists && !data.error) {
@@ -59,8 +59,8 @@ function ChatRoom() {
         if (data.groups.group) {
           dispatch(setGroupEmail(data.groups.group));
           data.groups.group.map((group) => {
-            // FOR GROUP INCOMING MAIL
-            socket.emit(
+            // FOR GROUP INCOMING MAIL || DO THIS WHEN FOR NEWLY CREATED GROUP
+            return socket.emit(
               "group logged in",
               `${group.groupName}: ${group._id} - ${state.user.email}`
             );
@@ -100,6 +100,7 @@ function ChatRoom() {
     dispatch(setCaller(null));
     dispatch(setIsCalling(false));
     dispatch(setToggle(null));
+    dispatch(getEmail([]));
 
     socket.on("previous_video_requests", (data) => {
       if (data) {
@@ -116,8 +117,47 @@ function ChatRoom() {
   useEffect(() => {
     socket.on("send_request", (data) => {
       dispatch(setCaller(data));
+      dispatch(pushNotification(data.caller));
+    });
+
+    socket.on("new group", (data) => {
+      // Notification for joining a new group
+      Toast.fire({
+        icon: "success",
+        title: "New group",
+      });
+
+      dispatch(pushGroupEmail(data));
+
+      // Joins a room for new group
+      socket.emit(
+        "group logged in",
+        `${data.groupName}: ${data._id} - ${state.user.email}`
+      );
     });
   }, [socket]);
+
+  // ISSUE: 153 in useVoiceChat.js -> Error: Connection failed. | at n.value (index.js:699:28) | at o._pc.onconnectionstatechange (index.js:118:12) -> ISSUE: No AUDIO
+  // TRY: Decrease the time in setTimeout or create a socket that will check if the other user get your signal before doing the peer.signal in setTimeout
+  // ISSUE:  154 in useVideoChat.js -> "Error: Connection failed. | at n.value (index.js:699:28) | at o._pc.onconnectionstatechange (index.js:118:12)"
+  // TRY: Decrease the time in setTimeout or create a socket that will check if the other user get your signal before doing the peer.signal in setTimeout
+  //  TypeError: t.peer.destoy is not a function
+  //     at n.<anonymous> (useVoiceChat.js:96:26)
+  //     at Et.emit (index.mjs:136:20)
+  //     at n.value (socket.js:498:20)
+  //     at n.value (socket.js:485:18)
+  //     at n.value (socket.js:455:22)
+  //     at Et.emit (index.mjs:136:20)
+  //     at manager.js:207:18
+
+  // --------------- ADD FEATURE ----------------
+  // NEW MAIL ARRIVE: When new mail arrive, add some notification(maybe on contact/message list) like the number of new mail.
+
+  // NEW GROUP IS CREATED: Add a notification(top right) for success creating/joining new group.
+
+  // Group List - new email didnt shown
+
+  // TODO: When the user is in call, all users cant do a call on this
 
   return (
     <div className="ChatRoom">
@@ -153,7 +193,9 @@ function ChatRoom() {
 
       {/* FOR VIDEO/VOICE CALL */}
       {isActive ? <Contact /> : null}
-      {caller && <Notification caller={caller} />}
+      {state.email.length > 0 &&
+        state.email.some((mail) => mail.header.from[0].email) &&
+        caller && <Notification caller={caller} />}
       {modal ? <Modal /> : null}
     </div>
   );

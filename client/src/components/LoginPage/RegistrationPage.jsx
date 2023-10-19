@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { TfiEmail } from "react-icons/tfi";
 import { SlArrowLeft, SlArrowDown } from "react-icons/sl";
 import { RiQuestionnaireLine } from "react-icons/ri";
@@ -14,6 +14,7 @@ function RegistrationPage() {
   const [showSettings, setShowSettings] = useState(false);
   const navigate = useNavigate();
   const dispatch = useDispatch();
+  const [formError, setFormError] = useState("");
   const [userInfo, setUserInfo] = useState({
     email: "",
     password: "",
@@ -34,8 +35,23 @@ function RegistrationPage() {
   // FOR REGISTRATION PAGE: Create an API that checks if the user is in DB
   const submit = async (e) => {
     e.preventDefault();
-    if (userInfo.smtp_username === "") {
-      setShowSettings(true);
+    const isFormValid = Object.values(userInfo).every(
+      (value) => value.trim() !== ""
+    );
+    if (!isFormValid) {
+      if (!showSettings) {
+        setShowSettings(true);
+      } else {
+        setFormError("Please fill in all fields");
+        setTimeout(() => {
+          setFormError(null);
+        }, 10000);
+      }
+    } else if (userInfo.email.includes("@google")) {
+      setFormError("Google mail is not available");
+      setTimeout(() => {
+        setFormError(null);
+      }, 10000);
     } else {
       try {
         Swal.fire({
@@ -46,33 +62,29 @@ function RegistrationPage() {
         });
 
         // Check if the user's info is valid
-        const response = await fetch(
-          `${process.env.REACT_APP_BACKEND_URL}${process.env.REACT_APP_API_USERS}`,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify(userInfo),
-          }
-        );
+        const response = await fetch(`/${process.env.REACT_APP_API_USERS}`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(userInfo),
+        });
 
         const data = await response.json();
-
         // SUCCED: redirect to Dashboard and fetch also the user details
         if (!data.userExists && !data.error) {
           dispatch(setUser(userInfo));
           Swal.close();
           navigate("/");
         } else {
-          // ANIMATION
-          Swal.close();
-          Toast.fire({
+          Swal.fire({
             icon: "error",
-            title: "Wrong credentials. Try Again",
+            title: "Authentication Error",
+            text: "Check your email provider for further info.",
           });
         }
       } catch (error) {
+        console.log("ERROR: ", error);
         Swal.close();
         Toast.fire({
           icon: "error",
@@ -101,6 +113,7 @@ function RegistrationPage() {
       </div>
 
       <form onSubmit={submit} className="registration__form">
+        {formError ? <h1 className="empty__fields">{formError}</h1> : null}
         <input
           onChange={inputOnChange}
           value={userInfo.email}

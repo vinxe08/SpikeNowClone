@@ -2,10 +2,16 @@ import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useOutletContext } from "react-router-dom";
 import FadeLoader from "react-spinners/FadeLoader";
-import { getEmail, setRecipient } from "../../features/email/emailSlice";
+import {
+  addAllEmail,
+  addEmail,
+  pushNotification,
+  setRecipient,
+} from "../../features/email/emailSlice";
 import MessageList from "./Sidebar/MessageList";
 import { Toast } from "../../lib/sweetalert";
 import { connectionError } from "../../lib/connectionError";
+import { debounce } from "../../lib/debounce";
 
 function ContactList() {
   const email = useSelector((state) => state.emailReducer);
@@ -35,11 +41,16 @@ function ContactList() {
     const user = email.user.email;
 
     const isInGroup = Object.values(groups).filter((data) => {
-      return data[0].header.subject[0] === item.header.subject?.[0];
+      return (
+        item?.header?.subject?.[0] &&
+        data?.[0]?.header?.subject?.[0] === item?.header?.subject?.[0]
+      );
     });
 
     const hasGroup = groupFilterer?.find(
-      (obj) => obj.header.subject[0] === item.header?.subject?.[0]
+      (obj) =>
+        obj?.header?.subject?.[0] &&
+        obj?.header?.subject?.[0] === item?.header?.subject?.[0]
     );
 
     if (hasGroup) {
@@ -84,9 +95,8 @@ function ContactList() {
   // FETCH ALL THE CONVERSATIONS
   const conversations = async () => {
     try {
-      // THIS IS ONLY FOR SINGLE PEER | CHECK IF IT IS FOR GROUP OR SINGLE
       const response = await fetch(
-        `${process.env.REACT_APP_BACKEND_URL}${process.env.REACT_APP_CONVERSATION_GET}`,
+        `/${process.env.REACT_APP_CONVERSATION_GET}`,
         {
           method: "POST",
           headers: {
@@ -115,58 +125,157 @@ function ContactList() {
     return dateB - dateA;
   }
 
+  const handleIncomingEmail = debounce((mails) => {
+    mails.slice(-1).map((newEmail) => {
+      const getSender = newEmail.header.from[0].match(/<([^>]+)>/)?.[1];
+      const groupReceiver = newEmail.header.to[0].split(", ");
+
+      // console.log("MAILS: ", mails, getSender);
+
+      // FOR GROUP MAIL
+      if (groupReceiver.length > 1 && newEmail.header.subject.length > 0) {
+        // if (
+        //   !sortData[newEmail.header.subject[0]]?.some(
+        //     (data) =>
+        //       data.body === newEmail.body &&
+        //       data.header.date[0] === newEmail.header.date[0]
+        //   )
+        // ) {
+        // sortData[newEmail.header.subject[0]].push(newEmail);
+        // setResult(sortData);
+        // dispatch(addAllEmail(newEmail));
+
+        setResult((prevState) => {
+          return {
+            ...prevState,
+            [newEmail.header.subject[0]]: [
+              ...prevState[newEmail.header.subject[0]],
+              newEmail,
+            ],
+          };
+        });
+        // }
+
+        // FOR WHEN THE MAIL IS SHOWN/OPEN
+        if (
+          email.email.length > 0 &&
+          email?.email?.[0]?.header.subject?.[0] === newEmail.header.subject[0]
+          //   &&
+          // !email.email.some(
+          //   (data) =>
+          //     data.body === newEmail.body &&
+          //     data.header.date[0] === newEmail.header.date[0]
+          // )
+        ) {
+          dispatch(addEmail(newEmail));
+        }
+
+        // For Notification
+        if (
+          email.email.length === 0 &&
+          // !email.mailNotification?.includes(newEmail.header.subject[0])
+          email?.email?.[0]?.header.subject?.[0] !== newEmail.header.subject[0]
+
+          // !email.email[0] ||
+          // email.email[0] !== sortData[newEmail.header.from[0]][0]
+        ) {
+          console.log("SUBJECT: ", newEmail.header.subject[0]);
+          dispatch(
+            pushNotification({
+              name: newEmail.header.subject[0],
+              type: "group",
+            })
+          );
+        }
+      } else {
+        // FOR PERSONAL EMAIL
+        // console.log("PERSONAL EMAIL: ", newEmail, getSender);
+        // console.log(
+        //   "IF: ",
+        //   sortData.hasOwnProperty(newEmail.header.from[0] || getSender),
+        //   !sortData[getSender || newEmail.header.from[0]].some(
+        //     (data) =>
+        //       data.body === newEmail.body &&
+        //       data.header.date[0] === newEmail.header.date[0]
+        //   )
+        // );
+
+        // // FOR WHEN THE MAIL IS SHOWN/OPEN
+        if (
+          // !sortData[newEmail.header.from[0]].some(
+          //   (data) =>
+          //     data.body === newEmail.body &&
+          //     data.header.date[0] === newEmail.header.date[0]
+          // ) &&
+          email.email[0] === sortData[newEmail.header.from[0]][0]
+        ) {
+          // console.log("NEW EMAIL: ", newEmail);
+          // console.log("sortData: ", sortData[newEmail.header.from[0]]);
+          dispatch(addEmail(newEmail));
+        }
+
+        // For Notification
+        if (
+          !email.email[0] ||
+          email.email[0] !== sortData[newEmail.header.from[0]][0]
+        ) {
+          // console.log("PUSH NOTIFICATION: ", newEmail);
+          dispatch(
+            pushNotification({ name: newEmail.header.from[0], type: "single" })
+          );
+        }
+
+        // For Pushing data in contact list
+        if (
+          sortData.hasOwnProperty(newEmail.header.from[0])
+          // &&
+          // !sortData[newEmail.header.from[0]].some(
+          //   (data) =>
+          //     data.body === newEmail.body &&
+          //     data.header.date[0] === newEmail.header.date[0]
+          // )
+        ) {
+          // sortData[newEmail.header.from[0]].push(newEmail);
+          // setResult(sortData);
+          setResult((prevState) => {
+            return {
+              ...prevState,
+              [newEmail.header.from[0]]: [
+                ...prevState[newEmail.header.from[0]],
+                newEmail,
+              ],
+            };
+          });
+          // dispatch(addAllEmail(newEmail));
+        }
+        // else if (
+        //   !sortData.hasOwnProperty(getSender || newEmail.header.from[0]) &&
+        //   !sortData[getSender || newEmail.header.from[0]].some(
+        //     (data) =>
+        //       data.body === newEmail.body &&
+        //       data.header.date[0] === newEmail.header.date[0]
+        //   )
+        // ) {
+        //   sortData[getSender || newEmail.header.from[0]] = [];
+        //   sortData[getSender || newEmail.header.from[0]].push(newEmail);
+        //   setResult(sortData);
+        //   dispatch(addAllEmail(newEmail));
+        // }
+      }
+    });
+  }, 1000);
+
   useEffect(() => {
     conversations();
     setResult(sortData);
   }, []);
 
   useEffect(() => {
-    const handleIncomingEmail = (newEmail) => {
-      const getSender = newEmail.header.from[0].match(/<([^>]+)>/)?.[1]; // getSender is undefined if it is for group
-      const groupReceiver = newEmail.header.to[0].split(", ");
+    setResult(sortData);
+    // console.log("sortData: ", sortData);
+  }, [email.groupEmail, email.allEmail]);
 
-      // Check if it is for group or it has more than 1 receiver
-      if (groupReceiver) {
-        dispatch(getEmail([...sortData[newEmail.header.subject[0]], newEmail]));
-
-        setResult((prevState) => {
-          // Check if it is already in contact/message list
-          if (prevState.hasOwnProperty(newEmail.header.subject[0])) {
-            return {
-              ...prevState,
-              [newEmail.header.subject[0]]: [
-                ...prevState[newEmail.header.subject[0]],
-                newEmail,
-              ],
-            };
-          } else {
-            return {
-              ...prevState,
-              [newEmail.header.subject[0]]: [newEmail],
-            };
-          }
-        });
-      } else {
-        setResult((prevState) => {
-          // If it is already in contact/message list
-          if (prevState.hasOwnProperty(getSender || newEmail.header.to[0])) {
-            return {
-              ...prevState,
-              [getSender || newEmail.header.to[0]]: [
-                ...prevState[getSender || newEmail.header.to[0]],
-                newEmail,
-              ],
-            };
-          } else {
-            return {
-              ...prevState,
-              [getSender || newEmail.header.to[0]]: [newEmail],
-            };
-          }
-        });
-      }
-    };
-
+  useEffect(() => {
     socket.on("new email", handleIncomingEmail);
     socket.on("connection error", connectionError);
 
@@ -174,7 +283,7 @@ function ContactList() {
       socket.off("new email", handleIncomingEmail);
       socket.off("connection error", connectionError);
     };
-  }, [socket]);
+  }, [socket, email.email, result]);
 
   return (
     <>
