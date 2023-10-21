@@ -179,7 +179,7 @@ function ContactList() {
           // !email.email[0] ||
           // email.email[0] !== sortData[newEmail.header.from[0]][0]
         ) {
-          console.log("SUBJECT: ", newEmail.header.subject[0]);
+          // console.log("SUBJECT: ", newEmail.header.subject[0]);
           dispatch(
             pushNotification({
               name: newEmail.header.subject[0],

@@ -55,6 +55,23 @@ function MessageList({ email }) {
     dispatch(getEmail(email));
     dispatch(setToggle("single"));
 
+    dispatch(
+      setReciever([
+        {
+          _id: socketRoom,
+          users: [email[0].header.from[0].email, email[0].header.to[0].email],
+        },
+      ])
+    );
+    dispatch(
+      setRecipient([
+        {
+          _id: socketRoom,
+          users: [email[0].header.from[0].email, email[0].header.to[0].email],
+        },
+      ])
+    );
+
     // MAKE THIS IN A FUNCTION AND RUN IN START -> SO NO NEED TO CLICK TO RECEIVE NOTIFICATIONS.
     // Check if it is group email and has an id
     // if (email[0]?.data?._id) {
@@ -165,28 +182,30 @@ function MessageList({ email }) {
 
         joinSocketRoom(email[0]?.data?._id);
 
-        dispatch(
-          setReciever([
-            {
-              _id: email[0]?.data?._id,
-              users: [
-                email[0].header.from[0].email,
-                email[0].header.to[0].email,
-              ],
-            },
-          ])
-        );
-        dispatch(
-          setRecipient([
-            {
-              _id: email[0]?.data?._id,
-              users: [
-                email[0].header.from[0].email,
-                email[0].header.to[0].email,
-              ],
-            },
-          ])
-        );
+        // TECHNIQUES: Put this "roomID" on state
+        // PUT THIS IN dispatchEmail() function to send the unique recipient._id -> use the "roomID" state for the _id
+        // dispatch(
+        //   setReciever([
+        //     {
+        //       _id: email[0]?.data?._id,
+        //       users: [
+        //         email[0].header.from[0].email,
+        //         email[0].header.to[0].email,
+        //       ],
+        //     },
+        //   ])
+        // );
+        // dispatch(
+        //   setRecipient([
+        //     {
+        //       _id: email[0]?.data?._id,
+        //       users: [
+        //         email[0].header.from[0].email,
+        //         email[0].header.to[0].email,
+        //       ],
+        //     },
+        //   ])
+        // );
       } else {
         const recipients = emailState.recipients.filter(
           (recipient) =>
@@ -275,12 +294,12 @@ function MessageList({ email }) {
     //     mail.header.from[0] !== emailState.user.email
     // );
 
-    console.log("EMAIL: ", email);
+    // console.log("EMAIL: ", email);
 
     const singleNotif = emailState?.mailNotification?.find(
       (notif) =>
         (notif.name === email[0].header?.from?.[0].email ||
-          email[0].header?.from?.[0]) &&
+          notif.name === email[0].header?.from?.[0]) &&
         notif.type === "single"
     );
 
@@ -301,7 +320,7 @@ function MessageList({ email }) {
       //     email[0]?.header?.to[0]
       // )
     ) {
-      console.log("FOR SINGLE NOTIFICATION: ", singleNotif);
+      console.log("FOR SINGLE NOTIFICATION: ", singleNotif, email);
       setNewNotif(
         singleNotif
         //   {

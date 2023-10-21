@@ -21,10 +21,10 @@ export function useVideoChat() {
   const fetchTurn = async () => {
     try {
       const data = await getTurnCredentials();
-      console.log("TURN CRED.: ", data);
+      // console.log("TURN CRED.: ", data);
       setIceServers(data.token.iceServers);
     } catch (error) {
-      console.log("TURN CRED ERROR: ", error);
+      // console.log("TURN CRED ERROR: ", error);
       setIceServers({ error });
     }
   };
@@ -150,7 +150,7 @@ export function useVideoChat() {
     });
 
     peer.on("signal", (signal) => {
-      console.log("CP-SIGNAL");
+      // console.log("CP-SIGNAL");
       socketRef.current.emit("sending signal", {
         userToSignal,
         callerID,
@@ -188,17 +188,21 @@ export function useVideoChat() {
 
     peer.on("error", (err) => {
       console.log(err);
+      // MAYBE THE REASON -> SLOW INTERNET CONNECTION
+      // Error: Connection failed.
+      // at n.value (index.js:699:28)
+      // at o._pc.onconnectionstatechange (index.js:118:12)
       Toast.fire({
         icon: "error",
         title: "Error. Try Again Later",
       });
     });
 
-    // setTimeout(() => {
-    //   peer.signal(incomingSignal);
-    // }, 1000);
+    setTimeout(() => {
+      peer.signal(incomingSignal);
+    }, 1000);
 
-    peer.signal(incomingSignal);
+    // peer.signal(incomingSignal);
 
     return peer;
   }

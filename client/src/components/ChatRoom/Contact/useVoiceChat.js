@@ -21,10 +21,10 @@ export function useVoiceChat() {
   const fetchTurn = async () => {
     try {
       const data = await getTurnCredentials();
-      console.log("TURN CRED.: ", data);
+      // console.log("TURN CRED.: ", data);
       setIceServers(data.token.iceServers);
     } catch (error) {
-      console.log("TURN CRED ERROR: ", error);
+      // console.log("TURN CRED ERROR: ", error);
       setIceServers({ error });
     }
   };
@@ -100,7 +100,7 @@ export function useVoiceChat() {
             const peerObj = peersRef.current.find((p) => p.peerID === id);
 
             if (peerObj) {
-              peerObj.peer.destoy();
+              peerObj.peer.destoy(); // causing an error -  TypeError: t.peer.destoy is not a function
             }
 
             const peers = peersRef.current.filter((p) => p.peerID !== id);
@@ -148,7 +148,7 @@ export function useVoiceChat() {
     });
 
     peer.on("signal", (signal) => {
-      console.log("CP-SIGNAL");
+      // console.log("CP-SIGNAL");
       socketRef.current.emit("sending signal", {
         userToSignal,
         callerID,

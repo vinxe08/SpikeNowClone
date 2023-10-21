@@ -99,6 +99,7 @@ export const emailSlice = createSlice({
       }
     },
     removeNotification: (state, action) => {
+      console.log("MAIL-NOTIF: ", state.mailNotification);
       if (
         Array.isArray(state.mailNotification) &&
         state.mailNotification.find(

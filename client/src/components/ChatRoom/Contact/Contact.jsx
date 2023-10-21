@@ -25,6 +25,8 @@ function Contact() {
   const user = useSelector((state) => state.emailReducer.user);
   const [recipient, setRecipient] = useState();
 
+  console.log("EMAIL: ", state);
+
   const [sendCall, setSendCall] = useState(null);
   const selectedRecipient = recipients?.filter(
     (data) =>
@@ -52,13 +54,14 @@ function Contact() {
     dispatch(setIsCalling(true));
 
     if (type === "Video Call") {
-      console.log("Video Call");
+      console.log("Video Call: ", recipient[0]._id);
       setSendCall({
-        id: recipient[0]._id, // ERROR: No ._id
+        id: recipient[0]._id, // THIS IS NOT THE SAME WITH OTHER TABS -> FIX IT IN MessageList.jsx
         name: state[0].header.to[0]?.name,
         email: state[0].header.to[0]?.email,
         type: "Video Call",
         caller: user.email,
+        mailType: state[0].header.type ? "group" : "single",
       });
       dispatch(setType("Video Call"));
 
@@ -68,14 +71,17 @@ function Contact() {
         email: state[0].header.to[0]?.email,
         type: "Video Call",
         caller: user.email,
+        mailType: state[0].header.type ? "group" : "single",
       });
     } else {
+      console.log("Voice Call: ", recipient[0]._id);
       setSendCall({
         id: recipient[0]._id,
         name: state[0].header.to[0]?.name,
         email: state[0].header.to[0]?.email,
         type: "Voice Call",
         caller: user.email,
+        mailType: state[0].header.type ? "group" : "single",
       });
       dispatch(setType("Voice Call"));
 
@@ -85,6 +91,7 @@ function Contact() {
         email: state[0].header.to[0]?.email,
         type: "Voice Call",
         caller: user.email,
+        mailType: state[0].header.type ? "group" : "single",
       });
     }
   };
