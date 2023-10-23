@@ -17,20 +17,18 @@ export function useVoiceChat() {
   const user = useSelector((state) => state.emailReducer.user.email);
   const recipient = useSelector((state) => state.emailReducer.recipients);
 
-  // ADDITION
+  // Fetch the twilio data
   const fetchTurn = async () => {
     try {
       const data = await getTurnCredentials();
-      // console.log("TURN CRED.: ", data);
       setIceServers(data.token.iceServers);
     } catch (error) {
-      // console.log("TURN CRED ERROR: ", error);
       setIceServers({ error });
     }
   };
 
   useEffect(() => {
-    fetchTurn(); // ADDITION
+    fetchTurn();
   }, []);
 
   useEffect(() => {
@@ -40,6 +38,7 @@ export function useVoiceChat() {
       socketRef.current = io.connect(`${process.env.REACT_APP_SOCKET}`, {
         withCredentials: true,
       });
+
       navigator.mediaDevices
         .getUserMedia({ audio: true })
         .then((stream) => {
@@ -89,10 +88,6 @@ export function useVoiceChat() {
           socketRef.current.on("receiving returned signal", (payload) => {
             const item = peersRef.current.find((p) => p.peerID === payload.id);
 
-            // setTimeout(() => {
-            //   item.peer.signal(payload.signal);
-            // }, 1000);
-
             item.peer.signal(payload.signal);
           });
 
@@ -100,7 +95,7 @@ export function useVoiceChat() {
             const peerObj = peersRef.current.find((p) => p.peerID === id);
 
             if (peerObj) {
-              peerObj.peer.destoy(); // causing an error -  TypeError: t.peer.destoy is not a function
+              peerObj.peer.destoy();
             }
 
             const peers = peersRef.current.filter((p) => p.peerID !== id);
@@ -148,7 +143,6 @@ export function useVoiceChat() {
     });
 
     peer.on("signal", (signal) => {
-      // console.log("CP-SIGNAL");
       socketRef.current.emit("sending signal", {
         userToSignal,
         callerID,
@@ -168,6 +162,7 @@ export function useVoiceChat() {
     return peer;
   }
 
+  // ADD ALL THE PEER THAT IS IN SERVER EXCLUDE ME/USER
   function addPeer(incomingSignal, callerID, stream) {
     const peer = new Peer({
       initiator: false,
@@ -178,7 +173,6 @@ export function useVoiceChat() {
       },
     });
 
-    // ADD ALL THE PEER THAT IS IN SERVER EXCLUDE ME/USER
     peer.on("signal", (signal) => {
       socketRef.current.emit("returning signal", { signal, callerID });
     });
@@ -191,11 +185,11 @@ export function useVoiceChat() {
       });
     });
 
-    // setTimeout(() => {
-    //   peer.signal(incomingSignal);
-    // }, 1000);
+    setTimeout(() => {
+      peer.signal(incomingSignal);
+    }, 1000);
 
-    peer.signal(incomingSignal);
+    // peer.signal(incomingSignal);
 
     return peer;
   }

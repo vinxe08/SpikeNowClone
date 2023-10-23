@@ -130,8 +130,6 @@ function ContactList() {
       const getSender = newEmail.header.from[0].match(/<([^>]+)>/)?.[1];
       const groupReceiver = newEmail.header.to[0].split(", ");
 
-      // console.log("MAILS: ", mails, getSender);
-
       // FOR GROUP MAIL
       if (groupReceiver.length > 1 && newEmail.header.subject.length > 0) {
         // if (
@@ -179,7 +177,6 @@ function ContactList() {
           // !email.email[0] ||
           // email.email[0] !== sortData[newEmail.header.from[0]][0]
         ) {
-          // console.log("SUBJECT: ", newEmail.header.subject[0]);
           dispatch(
             pushNotification({
               name: newEmail.header.subject[0],
@@ -188,18 +185,6 @@ function ContactList() {
           );
         }
       } else {
-        // FOR PERSONAL EMAIL
-        // console.log("PERSONAL EMAIL: ", newEmail, getSender);
-        // console.log(
-        //   "IF: ",
-        //   sortData.hasOwnProperty(newEmail.header.from[0] || getSender),
-        //   !sortData[getSender || newEmail.header.from[0]].some(
-        //     (data) =>
-        //       data.body === newEmail.body &&
-        //       data.header.date[0] === newEmail.header.date[0]
-        //   )
-        // );
-
         // // FOR WHEN THE MAIL IS SHOWN/OPEN
         if (
           // !sortData[newEmail.header.from[0]].some(
@@ -209,8 +194,6 @@ function ContactList() {
           // ) &&
           email.email[0] === sortData[newEmail.header.from[0]][0]
         ) {
-          // console.log("NEW EMAIL: ", newEmail);
-          // console.log("sortData: ", sortData[newEmail.header.from[0]]);
           dispatch(addEmail(newEmail));
         }
 
@@ -219,7 +202,6 @@ function ContactList() {
           !email.email[0] ||
           email.email[0] !== sortData[newEmail.header.from[0]][0]
         ) {
-          // console.log("PUSH NOTIFICATION: ", newEmail);
           dispatch(
             pushNotification({ name: newEmail.header.from[0], type: "single" })
           );
@@ -272,7 +254,6 @@ function ContactList() {
 
   useEffect(() => {
     setResult(sortData);
-    // console.log("sortData: ", sortData);
   }, [email.groupEmail, email.allEmail]);
 
   useEffect(() => {

@@ -40,7 +40,6 @@ function ChatRoom() {
   const menu = useSelector((state) => state.menuReducer.menu);
   const modal = useSelector((state) => state.menuReducer.modalCreate);
   const [loading, setLoading] = useState(false);
-  // console.log("CALLER: ", caller);
 
   const fetchUserInfo = async () => {
     setLoading(true);
@@ -118,7 +117,6 @@ function ChatRoom() {
 
   useEffect(() => {
     socket.on("send_request", (data) => {
-      console.log("SEND REQUEST: ", data);
       if (isCalling) {
         socket.emit("ignore_call", data);
       } else {
@@ -151,8 +149,6 @@ function ChatRoom() {
     });
   }, [socket]);
 
-  console.log("NOTIF: ", state.mailNotification);
-
   // ISSUE: 153 in useVoiceChat.js -> Error: Connection failed. | at n.value (index.js:699:28) | at o._pc.onconnectionstatechange (index.js:118:12) -> ISSUE: No AUDIO
   // TRY: Decrease the time in setTimeout or create a socket that will check if the other user get your signal before doing the peer.signal in setTimeout
   // ISSUE:  154 in useVideoChat.js -> "Error: Connection failed. | at n.value (index.js:699:28) | at o._pc.onconnectionstatechange (index.js:118:12)"
@@ -165,13 +161,6 @@ function ChatRoom() {
   //     at n.value (socket.js:455:22)
   //     at Et.emit (index.mjs:136:20)
   //     at manager.js:207:18
-
-  // --------------- ADD FEATURE ----------------
-  // NEW MAIL ARRIVE: When new mail arrive, add some notification(maybe on contact/message list) like the number of new mail.
-
-  // NEW GROUP IS CREATED: Add a notification(top right) for success creating/joining new group.
-
-  // Group List - new email didnt shown
 
   // TODO: When the user is in call, all users cant do a call on this. -> In socket.on("send_request"), isCalling ? send a response (decline) : DO "dispatch(setCaller(data)) && dispatch(pushNotification(data.caller))"
   // ALGO: isCalling -> if acceptCall() -> setIsCalling(true)

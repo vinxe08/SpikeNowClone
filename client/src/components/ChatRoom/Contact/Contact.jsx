@@ -25,8 +25,6 @@ function Contact() {
   const user = useSelector((state) => state.emailReducer.user);
   const [recipient, setRecipient] = useState();
 
-  console.log("EMAIL: ", state);
-
   const [sendCall, setSendCall] = useState(null);
   const selectedRecipient = recipients?.filter(
     (data) =>

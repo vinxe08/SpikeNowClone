@@ -17,20 +17,18 @@ export function useVideoChat() {
   const user = useSelector((state) => state.emailReducer.user.email);
   const recipient = useSelector((state) => state.emailReducer.recipients);
 
-  // ADDITION - Try to add this in Contact.jsx and set it a redux state
+  // Fetch the twilio data
   const fetchTurn = async () => {
     try {
       const data = await getTurnCredentials();
-      // console.log("TURN CRED.: ", data);
       setIceServers(data.token.iceServers);
     } catch (error) {
-      // console.log("TURN CRED ERROR: ", error);
       setIceServers({ error });
     }
   };
 
   useEffect(() => {
-    fetchTurn(); // ADDITION
+    fetchTurn();
   }, []);
 
   useEffect(() => {
@@ -90,10 +88,6 @@ export function useVideoChat() {
           socketRef.current.on("receiving returned signal", (payload) => {
             const item = peersRef.current.find((p) => p.peerID === payload.id);
 
-            // setTimeout(() => {
-            //   item.peer.signal(payload.signal);
-            // }, 1000);
-
             item.peer.signal(payload.signal);
           });
 
@@ -110,7 +104,7 @@ export function useVideoChat() {
           });
         })
         .catch((error) => {
-          console.log(error);
+          console.log("GET USER MEDIA: ", error);
           Toast.fire({
             icon: "error",
             title: "Error. Try Again Later",
@@ -139,7 +133,6 @@ export function useVideoChat() {
 
   // Create a PEER Connection and send in SERVER
   function createPeer(userToSignal, callerID, stream) {
-    console.log("CP-ICE SERVERS: ", iceServers);
     const peer = new Peer({
       initiator: true,
       trickle: false,
@@ -150,7 +143,6 @@ export function useVideoChat() {
     });
 
     peer.on("signal", (signal) => {
-      // console.log("CP-SIGNAL");
       socketRef.current.emit("sending signal", {
         userToSignal,
         callerID,
@@ -160,7 +152,7 @@ export function useVideoChat() {
     });
 
     peer.on("error", (err) => {
-      console.log(err);
+      console.log("CREATE PEER ERROR: ", err);
       Toast.fire({
         icon: "error",
         title: "Error. Try Again Later",
@@ -172,7 +164,6 @@ export function useVideoChat() {
 
   // ADD ALL THE PEER THAT IS IN SERVER EXCLUDE ME/USER
   function addPeer(incomingSignal, callerID, stream) {
-    console.log("AP-ICE SERVERS: ", iceServers);
     const peer = new Peer({
       initiator: false,
       trickle: false,
@@ -188,10 +179,6 @@ export function useVideoChat() {
 
     peer.on("error", (err) => {
       console.log(err);
-      // MAYBE THE REASON -> SLOW INTERNET CONNECTION
-      // Error: Connection failed.
-      // at n.value (index.js:699:28)
-      // at o._pc.onconnectionstatechange (index.js:118:12)
       Toast.fire({
         icon: "error",
         title: "Error. Try Again Later",

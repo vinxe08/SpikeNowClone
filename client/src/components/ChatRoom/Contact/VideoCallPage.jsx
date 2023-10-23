@@ -9,10 +9,7 @@ const Video = ({ video }) => {
   const ref = useRef();
 
   useEffect(() => {
-    console.log("VIDEO: ", video);
-    console.log("VIDEO-PEER: ", video.peer);
     if (video.peer) {
-      console.log("IF-VIDEO-PEER: ", video.peer);
       video.peer.on("stream", (stream) => {
         console.log("Video Stream: ", stream);
         if (ref.current) {

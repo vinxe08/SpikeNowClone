@@ -33,12 +33,10 @@ function MessageList({ email }) {
       socket.emit("leave convo", socketRoom); // socketRoom is the old convo -> go & leave convo
 
       socket.on("on leave", (message) => {
-        console.log("on leave");
         // add the new socket
         socket.emit("select_conversation", id);
       });
     } else {
-      console.log("ELSE: ", socketRoom);
       socket.emit("select_conversation", id);
     }
 
@@ -47,11 +45,7 @@ function MessageList({ email }) {
 
   // Displays Conversation
   const dispatchEmail = async () => {
-    // console.log("NEW NOTIF: ", newNotif);
     dispatch(removeNotification(newNotif));
-
-    // if i click this -> set this in state -> in useEffect, do a socket.emit -> if i click another contact -> before i set this new state -> do a socket.emit("leave room", id)
-    // console.log("EMAIL: ", email);
     dispatch(getEmail(email));
     dispatch(setToggle("single"));
 
@@ -71,141 +65,12 @@ function MessageList({ email }) {
         },
       ])
     );
-
-    // MAKE THIS IN A FUNCTION AND RUN IN START -> SO NO NEED TO CLICK TO RECEIVE NOTIFICATIONS.
-    // Check if it is group email and has an id
-    // if (email[0]?.data?._id) {
-    //   console.log("IF select_conversation: ", email[0]?.data?._id);
-    //   // socket.emit("select_conversation", email[0]?.data?._id);
-
-    //   joinSocketRoom(email[0]?.data?._id);
-
-    //   dispatch(
-    //     setReciever([
-    //       {
-    //         _id: email[0]?.data?._id,
-    //         users: [email[0].header.from[0].email, email[0].header.to[0].email],
-    //       },
-    //     ])
-    //   );
-    //   dispatch(
-    //     setRecipient([
-    //       {
-    //         _id: email[0]?.data?._id,
-    //         users: [email[0].header.from[0].email, email[0].header.to[0].email],
-    //       },
-    //     ])
-    //   );
-    // } else {
-    //   const recipients = emailState.recipients.filter(
-    //     (recipient) =>
-    //       recipient.users.includes(
-    //         email[0].header.from[0].email || email[0].header.from[0]
-    //       ) &&
-    //       recipient.users.includes(
-    //         email[0].header.to[0].email || email[0].header.to[0]
-    //       )
-    //   );
-
-    //   // const userRecipient = emailState.recipients.filter(
-    //   //   (recipient) =>
-    //   //     recipient.users.includes(emailState.user.email) &&
-    //   //     recipient.users.includes(
-    //   //       email[0].header.to[0].email || email[0].header.to[0]
-    //   //     )
-    //   // );
-
-    //   console.log(
-    //     "RECIPIENTS: ",
-    //     emailState.recipients,
-    //     recipients
-    //     // userRecipient
-    //   );
-
-    //   if (recipients.length > 0) {
-    //     console.log("ELSE IF-select_conversation: ", recipients[0]?._id);
-    //     dispatch(setReciever(recipients));
-    //     // socket.emit("select_conversation", recipients[0]?._id);
-    //     joinSocketRoom(recipients[0]?._id);
-    //   }
-    //   // else if (userRecipient.length > 0) {
-    //   //   dispatch(setRecipient(userRecipient));
-    //   //   dispatch(setReciever(userRecipient));
-    //   //   console.log(
-    //   //     "ELSE ELSE-IF select_conversation: ",
-    //   //     userRecipient[0]?._id
-    //   //   );
-    //   //   // socket.emit("select_conversation", userRecipient[0]?._id);
-    //   //   joinSocketRoom(userRecipient[0]?._id);
-    //   // }
-    //   else {
-    //     // CREATE CONVERSATION
-    //     try {
-    //       const response = await fetch(
-    //         `/${process.env.REACT_APP_CONVERSATION_CREATE}`,
-    //         {
-    //           method: "POST",
-    //           headers: {
-    //             "Content-Type": "application/json",
-    //           },
-    //           body: JSON.stringify({
-    //             email: email[0].header.to[0].email || email[0].header.to[0], //
-    //             receiver:
-    //               email[0].header.from[0].email || email[0].header.from[0],
-    //           }),
-    //         }
-    //       );
-    //       const result = await response.json();
-    //       if (result) {
-    //         dispatch(setRecipient([result.response.data]));
-    //         dispatch(setReciever([result.response.data]));
-    //         console.log("ELSE ELSE-ELSE select_conversation: ", result);
-    //         // socket.emit("select_conversation", result.response.data._id);
-    //         joinSocketRoom(result.response.data._id);
-    //       }
-    //     } catch (error) {
-    //       console.log(error);
-    //       Toast.fire({
-    //         icon: "error",
-    //         title: "Error. Please try again",
-    //       });
-    //     }
-    //   }
-    // }
   };
 
   useEffect(() => {
     const joinConvo = async () => {
       if (email[0]?.data?._id) {
-        console.log("IF select_conversation: ", email[0]?.data?._id);
-        // socket.emit("select_conversation", email[0]?.data?._id);
-
         joinSocketRoom(email[0]?.data?._id);
-
-        // TECHNIQUES: Put this "roomID" on state
-        // PUT THIS IN dispatchEmail() function to send the unique recipient._id -> use the "roomID" state for the _id
-        // dispatch(
-        //   setReciever([
-        //     {
-        //       _id: email[0]?.data?._id,
-        //       users: [
-        //         email[0].header.from[0].email,
-        //         email[0].header.to[0].email,
-        //       ],
-        //     },
-        //   ])
-        // );
-        // dispatch(
-        //   setRecipient([
-        //     {
-        //       _id: email[0]?.data?._id,
-        //       users: [
-        //         email[0].header.from[0].email,
-        //         email[0].header.to[0].email,
-        //       ],
-        //     },
-        //   ])
-        // );
       } else {
         const recipients = emailState.recipients.filter(
           (recipient) =>
@@ -225,30 +90,10 @@ function MessageList({ email }) {
         //     )
         // );
 
-        // console.log(
-        //   "RECIPIENTS: ",
-        //   emailState.recipients,
-        //   recipients
-        //   // userRecipient
-        // );
-
         if (recipients.length > 0) {
-          console.log("ELSE IF-select_conversation: ", recipients[0]?._id);
           dispatch(setReciever(recipients));
-          // socket.emit("select_conversation", recipients[0]?._id);
           joinSocketRoom(recipients[0]?._id);
-        }
-        // else if (userRecipient.length > 0) {
-        //   dispatch(setRecipient(userRecipient));
-        //   dispatch(setReciever(userRecipient));
-        //   console.log(
-        //     "ELSE ELSE-IF select_conversation: ",
-        //     userRecipient[0]?._id
-        //   );
-        //   // socket.emit("select_conversation", userRecipient[0]?._id);
-        //   joinSocketRoom(userRecipient[0]?._id);
-        // }
-        else {
+        } else {
           // CREATE CONVERSATION
           try {
             const response = await fetch(
@@ -269,8 +114,6 @@ function MessageList({ email }) {
             if (result) {
               dispatch(setRecipient([result.response.data]));
               dispatch(setReciever([result.response.data]));
-              console.log("ELSE ELSE-ELSE select_conversation: ", result);
-              // socket.emit("select_conversation", result.response.data._id);
               joinSocketRoom(result.response.data._id);
             }
           } catch (error) {
@@ -294,8 +137,6 @@ function MessageList({ email }) {
     //     mail.header.from[0] !== emailState.user.email
     // );
 
-    // console.log("EMAIL: ", email);
-
     const singleNotif = emailState?.mailNotification?.find(
       (notif) =>
         (notif.name === email[0].header?.from?.[0].email ||
@@ -309,7 +150,6 @@ function MessageList({ email }) {
     );
 
     if (hasType.length > 0 && groupNotif) {
-      console.log("FOR GROUP NOTIFICATION: ", groupNotif, email);
       setNewNotif(groupNotif);
     } else if (
       singleNotif
@@ -320,7 +160,6 @@ function MessageList({ email }) {
       //     email[0]?.header?.to[0]
       // )
     ) {
-      console.log("FOR SINGLE NOTIFICATION: ", singleNotif, email);
       setNewNotif(
         singleNotif
         //   {
