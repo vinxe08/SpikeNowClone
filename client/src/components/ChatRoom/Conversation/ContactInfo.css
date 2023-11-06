@@ -56,3 +56,12 @@ h1 {
   justify-content: space-around;
   align-items: center;
 }
+
+.camera__icon {
+  cursor: pointer;
+  transition: 0.2s ease-in-out;
+}
+
+.camera__icon:active {
+  transform: scale(0.9);
+}

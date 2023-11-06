@@ -5,6 +5,8 @@ const initialState = {
   caller: null,
   isCalling: false,
   type: "",
+  call: null,
+  inComingCall: false,
 };
 
 export const showSlice = createSlice({
@@ -26,6 +28,12 @@ export const showSlice = createSlice({
     setType: (state, action) => {
       state.type = action.payload;
     },
+    setCall: (state, action) => {
+      state.call = action.payload;
+    },
+    setInComingCall: (state, action) => {
+      state.inComingCall = action.payload;
+    },
   },
 });
 
@@ -35,6 +43,8 @@ export const {
   setCaller,
   setIsCalling,
   setType,
+  setCall,
+  setInComingCall,
 } = showSlice.actions;
 
 export default showSlice.reducer;

@@ -4,6 +4,7 @@ import { IoClose } from "react-icons/io5";
 import { BsFillTelephoneForwardFill, BsCameraVideoFill } from "react-icons/bs";
 import {
   hideContactInfo,
+  setCall,
   setIsCalling,
   setType,
 } from "../../../features/show/showSlice";
@@ -24,6 +25,7 @@ function Contact() {
   const type = useSelector((state) => state.showReducer.type);
   const user = useSelector((state) => state.emailReducer.user);
   const [recipient, setRecipient] = useState();
+  const call = useSelector((state) => state.showReducer.call);
 
   const [sendCall, setSendCall] = useState(null);
   const selectedRecipient = recipients?.filter(
@@ -46,19 +48,20 @@ function Contact() {
 
   const closeModal = () => {
     setSendCall(null);
+    dispatch(setCall(null));
   };
 
   const callUser = (type) => {
     dispatch(setIsCalling(true));
 
     if (type === "Video Call") {
-      console.log("Video Call: ", recipient[0]._id);
       setSendCall({
-        id: recipient[0]._id, // THIS IS NOT THE SAME WITH OTHER TABS -> FIX IT IN MessageList.jsx
+        id: recipient[0]._id,
         name: state[0].header.to[0]?.name,
         email: state[0].header.to[0]?.email,
         type: "Video Call",
-        caller: user.email,
+        // caller: user.email,
+        caller: state[0].header.type ? state[0].header.subject[0] : user.email,
         mailType: state[0].header.type ? "group" : "single",
       });
       dispatch(setType("Video Call"));
@@ -68,17 +71,18 @@ function Contact() {
         name: state[0].header.to[0]?.name,
         email: state[0].header.to[0]?.email,
         type: "Video Call",
-        caller: user.email,
+        // caller: user.email,
+        caller: state[0].header.type ? state[0].header.subject[0] : user.email,
         mailType: state[0].header.type ? "group" : "single",
       });
     } else {
-      console.log("Voice Call: ", recipient[0]._id);
       setSendCall({
         id: recipient[0]._id,
         name: state[0].header.to[0]?.name,
         email: state[0].header.to[0]?.email,
         type: "Voice Call",
-        caller: user.email,
+        // caller: user.email,
+        caller: state[0].header.type ? state[0].header.subject[0] : user.email,
         mailType: state[0].header.type ? "group" : "single",
       });
       dispatch(setType("Voice Call"));
@@ -88,7 +92,8 @@ function Contact() {
         name: state[0].header.to[0]?.name,
         email: state[0].header.to[0]?.email,
         type: "Voice Call",
-        caller: user.email,
+        // caller: user.email,
+        caller: state[0].header.type ? state[0].header.subject[0] : user.email,
         mailType: state[0].header.type ? "group" : "single",
       });
     }
@@ -98,12 +103,21 @@ function Contact() {
     socket.on("ignore_response", (data) => {
       dispatch(setIsCalling(false));
       alert("CALL IGNORED");
+      // ADD MODAL FOR CALL IGNORED
+      setSendCall(null);
+      dispatch(setCall(null));
     });
 
     socket.on("on_accept", (data) => {
       setSendCall(null);
     });
   }, [socket]);
+
+  useEffect(() => {
+    if (call) {
+      setSendCall(call);
+    }
+  }, [call]);
 
   return (
     <div className="Contact">
@@ -150,29 +164,31 @@ function Contact() {
           <h1 className="threads__title">THREADS</h1>
           {/* THREADS */}
           {state?.length > 0
-            ? state.map((email, index) => (
-                <div key={index} className="threads__container">
-                  <h1 className="threads__avatar">
-                    {email.header.from?.[0].name?.[0]}
-                  </h1>
-                  <div className="threads__info">
-                    <div className="threads__user">
-                      <h1 className="threads__name">
-                        {email.header.from?.[0].name}
+            ? state
+                .filter((mail) => mail.body)
+                .map((email, index) => (
+                  <div key={index} className="threads__container">
+                    <h1 className="threads__avatar">
+                      {email.header.from?.[0].name?.[0]}
+                    </h1>
+                    <div className="threads__info">
+                      <div className="threads__user">
+                        <h1 className="threads__name">
+                          {email.header.from?.[0].name}
+                        </h1>
+                        <h1 className="threads__timestamp">
+                          <TimeAgo date={email.header.date?.[0]} />
+                        </h1>
+                      </div>
+                      <h1 className="threads__subject">
+                        {email.header.subject?.[0] || ""}
                       </h1>
-                      <h1 className="threads__timestamp">
-                        <TimeAgo date={email.header.date?.[0]} />
+                      <h1 className="threads__message">
+                        {email.body ? truncate(email.body, 30) : null}
                       </h1>
                     </div>
-                    <h1 className="threads__subject">
-                      {email.header.subject?.[0] || ""}
-                    </h1>
-                    <h1 className="threads__message">
-                      {truncate(email.body, 30)}
-                    </h1>
                   </div>
-                </div>
-              ))
+                ))
             : null}
         </div>
       </div>

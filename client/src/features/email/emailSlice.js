@@ -94,17 +94,28 @@ export const emailSlice = createSlice({
         state.mailNotification = [];
       }
 
-      if (!state.mailNotification.includes(action.payload)) {
+      if (
+        state.mailNotification.length === 0 ||
+        state.mailNotification.some(
+          (notif) => notif.name !== action.payload.name
+        )
+      ) {
+        console.log("IF PAYLOAD: ", action.payload, state);
         state.mailNotification.push(action.payload);
+      } else {
+        console.log("ELSE PAYLOAD: ", action.payload, state);
       }
+      // console.log("ACTION PAYLOAD: ", action.payload, state);
     },
     removeNotification: (state, action) => {
+      console.log("EMAIL SLICE: ", state, action.payload);
       if (
         Array.isArray(state.mailNotification) &&
+        state.mailNotification.length > 0 &&
         state.mailNotification.find(
           (notif) =>
-            notif.name === action.payload.name &&
-            notif.type === action.payload.type
+            notif.name === action.payload?.name &&
+            notif.type === action.payload?.type
         )
       ) {
         state.mailNotification.splice(

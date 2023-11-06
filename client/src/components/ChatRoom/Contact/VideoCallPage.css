@@ -6,6 +6,7 @@
   /* min-width: 50rem; */
   width: 20rem;
   height: 100vh;
+  z-index: 15;
 }
 
 .videocall__container {
@@ -19,6 +20,7 @@
 .close {
   font-size: 1.9rem;
   margin-top: 8px;
+  z-index: 15;
 }
 
 .video__header {

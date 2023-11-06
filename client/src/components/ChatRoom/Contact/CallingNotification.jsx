@@ -2,7 +2,7 @@ import React from "react";
 import { useDispatch } from "react-redux";
 import { IoClose } from "react-icons/io5";
 import "./Notification.css";
-import { setCaller } from "../../../features/show/showSlice";
+import { setCaller, setIsCalling } from "../../../features/show/showSlice";
 import { useOutletContext } from "react-router-dom";
 
 // CALLERS NOTIFICATION
@@ -12,6 +12,7 @@ function CallingNotification({ caller, modal }) {
 
   const ignoreCall = () => {
     dispatch(setCaller(null));
+    dispatch(setIsCalling(false));
     socket.emit("ignore_call", caller);
     modal();
   };

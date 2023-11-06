@@ -45,6 +45,68 @@ function MessageList({ email }) {
 
   // Displays Conversation
   const dispatchEmail = async () => {
+    let roomId;
+
+    if (email[0]?.data?._id) {
+      joinSocketRoom(email[0]?.data?._id);
+      roomId = email[0]?.data?._id;
+    } else {
+      const recipients = emailState.recipients.filter(
+        (recipient) =>
+          recipient.users.includes(
+            email[0].header.from[0].email || email[0].header.from[0]
+          ) &&
+          recipient.users.includes(
+            email[0].header.to[0].email || email[0].header.to[0]
+          )
+      );
+
+      // const userRecipient = emailState.recipients.filter(
+      //   (recipient) =>
+      //     recipient.users.includes(emailState.user.email) &&
+      //     recipient.users.includes(
+      //       email[0].header.to[0].email || email[0].header.to[0]
+      //     )
+      // );
+
+      if (recipients.length > 0) {
+        dispatch(setReciever(recipients));
+        joinSocketRoom(recipients[0]?._id);
+        roomId = recipients[0]?._id;
+      } else {
+        // CREATE CONVERSATION
+        try {
+          const response = await fetch(
+            `/${process.env.REACT_APP_CONVERSATION_CREATE}`,
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                email: email[0].header.to[0].email || email[0].header.to[0], //
+                receiver:
+                  email[0].header.from[0].email || email[0].header.from[0],
+              }),
+            }
+          );
+          const result = await response.json();
+          if (result) {
+            dispatch(setRecipient([result.response.data]));
+            dispatch(setReciever([result.response.data]));
+            joinSocketRoom(result.response.data._id);
+            roomId = result.response.data._id;
+          }
+        } catch (error) {
+          console.log(error);
+          Toast.fire({
+            icon: "error",
+            title: "Error. Please try again",
+          });
+        }
+      }
+    }
+
     dispatch(removeNotification(newNotif));
     dispatch(getEmail(email));
     dispatch(setToggle("single"));
@@ -52,7 +114,7 @@ function MessageList({ email }) {
     dispatch(
       setReciever([
         {
-          _id: socketRoom,
+          _id: roomId,
           users: [email[0].header.from[0].email, email[0].header.to[0].email],
         },
       ])
@@ -60,7 +122,7 @@ function MessageList({ email }) {
     dispatch(
       setRecipient([
         {
-          _id: socketRoom,
+          _id: roomId,
           users: [email[0].header.from[0].email, email[0].header.to[0].email],
         },
       ])
@@ -68,7 +130,58 @@ function MessageList({ email }) {
   };
 
   useEffect(() => {
-    const joinConvo = async () => {
+    // const mailSender = email.find(
+    //   (mail) =>
+    //     mail.header.from[0].email ||
+    //     mail.header.from[0] !== emailState.user.email
+    // );
+
+    const checkUser = emailState.email.filter(
+      (item) => item.header.from[0]?.email !== emailState.user.email
+    );
+
+    console.log(
+      "NOTIFICATION: ",
+      emailState.mailNotification,
+      email,
+      emailState.email
+    );
+
+    const singleNotif = emailState?.mailNotification?.find(
+      (notif) =>
+        (notif.name === email[0].header?.from?.[0].email ||
+          notif.name === email[0].header?.from?.[0]) &&
+        notif.type === "single"
+    );
+
+    const groupNotif = emailState?.mailNotification?.find(
+      (notif) =>
+        notif.name === email[0].header.subject?.[0] && notif.type === "group"
+    );
+
+    if (
+      hasType.length > 0 &&
+      groupNotif &&
+      // emailState.email[0].header.subject[
+      //   0 !== emailState.mailNotification[0].name
+      // ]
+      email?.[0]?.header.subject[0] !== emailState.email?.[0]?.header.subject[0]
+    ) {
+      setNewNotif(groupNotif);
+      console.log("IF-GROUP: ", groupNotif);
+    } else if (
+      singleNotif &&
+      email[0].header.from[0].email !== checkUser?.[0]?.header.from[0]?.email
+    ) {
+      setNewNotif(singleNotif);
+      console.log("IF-SINGLE: ", singleNotif);
+    } else {
+      setNewNotif(null);
+    }
+  }, [emailState.mailNotification]);
+
+  useEffect(() => {
+    const joinRoom = async () => {
       if (email[0]?.data?._id) {
         joinSocketRoom(email[0]?.data?._id);
       } else {
@@ -127,51 +240,8 @@ function MessageList({ email }) {
       }
     };
 
-    joinConvo();
+    joinRoom();
   }, []);
-
-  useEffect(() => {
-    // const mailSender = email.find(
-    //   (mail) =>
-    //     mail.header.from[0].email ||
-    //     mail.header.from[0] !== emailState.user.email
-    // );
-
-    const singleNotif = emailState?.mailNotification?.find(
-      (notif) =>
-        (notif.name === email[0].header?.from?.[0].email ||
-          notif.name === email[0].header?.from?.[0]) &&
-        notif.type === "single"
-    );
-
-    const groupNotif = emailState?.mailNotification?.find(
-      (notif) =>
-        notif.name === email[0].header.subject?.[0] && notif.type === "group"
-    );
-
-    if (hasType.length > 0 && groupNotif) {
-      setNewNotif(groupNotif);
-    } else if (
-      singleNotif
-      // emailState?.mailNotification?.includes(
-      //   mailSender?.header?.from?.[0].email ||
-      //     mailSender?.header?.from?.[0] ||
-      //     email.header?.to?.[0].email ||
-      //     email[0]?.header?.to[0]
-      // )
-    ) {
-      setNewNotif(
-        singleNotif
-        //   {
-        //   name:
-        //     mailSender?.header?.from?.[0]?.email || mailSender?.header?.from?.[0],
-        //   type: "single",
-        // }
-      );
-    } else {
-      setNewNotif(null);
-    }
-  }, [emailState.mailNotification]);
 
   return (
     <div onClick={dispatchEmail} className="MessageList">

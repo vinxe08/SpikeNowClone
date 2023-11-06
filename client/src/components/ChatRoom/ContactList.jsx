@@ -24,7 +24,7 @@ function ContactList() {
       data: item,
       header: {
         date: [item.timestamp],
-        from: [email.user.email],
+        from: [{ email: email.user.email }],
         subject: [`${item.groupName}: ${item._id}`],
         to: item.users,
         type: "group",
@@ -110,6 +110,7 @@ function ContactList() {
       const data = await response.json();
       dispatch(setRecipient(data));
     } catch (error) {
+      console.log("ERROR: ", error);
       Toast.fire({
         icon: "error",
         title: "Error. Try Again Later",
@@ -275,7 +276,7 @@ function ContactList() {
             {result &&
               Object.values(result)
                 .sort(compareDates)
-                .map((mail, index) => <MessageList key={index} email={mail} />)}
+                .map((mail) => <MessageList key={mail[0]} email={mail} />)}
           </div>
         ) : (
           <div className="loading__icon">

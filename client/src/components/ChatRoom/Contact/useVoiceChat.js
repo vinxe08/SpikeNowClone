@@ -95,7 +95,7 @@ export function useVoiceChat() {
             const peerObj = peersRef.current.find((p) => p.peerID === id);
 
             if (peerObj) {
-              peerObj.peer.destoy();
+              peerObj.peer.destroy();
             }
 
             const peers = peersRef.current.filter((p) => p.peerID !== id);

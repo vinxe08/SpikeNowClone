@@ -3,6 +3,68 @@
   /* overflow-x: hidden; */
 }
 
+.notification__permission {
+  position: absolute;
+  height: 100vh;
+  width: 100vw;
+  background: rgba(0, 0, 0, 0.404);
+  display: flex;
+  align-items: flex-start;
+  z-index: 10;
+}
+
+.permission__container {
+  height: 40px;
+  width: 100vw;
+  background: rgb(18, 137, 248);
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  padding: 0 15px;
+  position: relative;
+}
+
+.permission__h1 {
+  font-family: "Open Sans", sans-serif;
+  font-size: 0.9rem;
+  letter-spacing: 1px;
+  color: white;
+}
+
+.permission__accept {
+  position: absolute;
+  top: 8px;
+  right: 20px;
+  height: 30px;
+  width: 30px;
+  display: flex;
+  background: none;
+  border: none;
+  color: white;
+  font-size: 1.2rem;
+  cursor: pointer;
+  transition: 0.2s ease-in-out;
+}
+
+.permission__accept:active {
+  transform: scale(0.9);
+}
+
+.permission__accept:hover {
+  transform: scale(1.1);
+}
+
+.caller__divider {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100vh;
+  width: 100vw;
+  background: rgba(0, 0, 0, 0.151);
+  z-index: 10;
+}
+
 .SideBar {
   display: flex;
   flex-direction: column;

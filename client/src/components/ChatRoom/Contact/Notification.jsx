@@ -5,6 +5,7 @@ import { BsSendCheckFill } from "react-icons/bs";
 import "./Notification.css";
 import {
   setCaller,
+  setInComingCall,
   setIsCalling,
   setType,
   showContactInfo,
@@ -19,6 +20,8 @@ function Notification({ caller, sender }) {
   const ignoreCall = () => {
     dispatch(setCaller(null));
     socket.emit("ignore_call", caller);
+    dispatch(setInComingCall(false));
+    dispatch(setIsCalling(false));
   };
 
   const acceptCall = () => {
@@ -27,6 +30,7 @@ function Notification({ caller, sender }) {
     dispatch(setIsCalling(true));
     dispatch(setType(caller.type));
     socket.emit("on_accept", caller);
+    dispatch(setInComingCall(false));
   };
 
   return (

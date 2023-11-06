@@ -19,6 +19,7 @@
 .close {
   font-size: 1.9rem;
   margin-top: 8px;
+  z-index: 10;
 }
 
 .voice__header {

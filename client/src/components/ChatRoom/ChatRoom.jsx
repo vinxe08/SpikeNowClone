@@ -13,6 +13,8 @@ import {
   pushGroupEmail,
   pushNotification,
   setGroupEmail,
+  setReciever,
+  setRecipient,
   setToggle,
 } from "../../features/email/emailSlice";
 import Contact from "./Contact/Contact";
@@ -21,6 +23,7 @@ import { Toast } from "../../lib/sweetalert";
 import {
   hideContactInfo,
   setCaller,
+  setInComingCall,
   setIsCalling,
 } from "../../features/show/showSlice";
 import Notification from "./Contact/Notification";
@@ -28,18 +31,44 @@ import GroupList from "./Sidebar/GroupList";
 import Modal from "./Modal";
 import GroupConversation from "./GroupEmail/GroupConversation";
 import FadeLoader from "react-spinners/FadeLoader";
+import sound from "../../assets/ringtone.mp3";
+import { AiOutlineCloseCircle } from "react-icons/ai";
 
 function ChatRoom() {
-  const state = useSelector((state) => state.emailReducer);
-  const isActive = useSelector((state) => state.showReducer.active);
-  const isCalling = useSelector((state) => state.showReducer.isCalling);
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { socket } = useOutletContext();
+  const state = useSelector((state) => state.emailReducer);
+  const isActive = useSelector((state) => state.showReducer.active);
+  const isCalling = useSelector((state) => state.showReducer.isCalling);
+  const inComingCall = useSelector((state) => state.showReducer.inComingCall);
   const caller = useSelector((state) => state.showReducer.caller);
   const menu = useSelector((state) => state.menuReducer.menu);
   const modal = useSelector((state) => state.menuReducer.modalCreate);
   const [loading, setLoading] = useState(false);
+  const [ringtone] = useState(new Audio(sound));
+  const [openPermission, setOpenPermission] = useState(false);
+  const [callee, setCallee] = useState(null);
+
+  const acceptPermission = () => {
+    setOpenPermission(true);
+  };
+
+  const playRingtone = () => {
+    if (ringtone && inComingCall) {
+      ringtone.play().catch((error) => {
+        // Handle the play() promise error here
+        console.error("Failed to play ringtone:", error);
+      });
+      console.log("PLAY RINGTONE");
+    }
+  };
+
+  const stopRingtone = () => {
+    ringtone.pause();
+    ringtone.currentTime = 0;
+    console.log("PAUSE RINGTONE");
+  };
 
   const fetchUserInfo = async () => {
     setLoading(true);
@@ -53,7 +82,6 @@ function ChatRoom() {
         body: JSON.stringify(state.user),
       });
       const data = await response.json();
-      // console.log("CHATROOM: RES - ", response);
 
       if (!data.userExists && !data.error) {
         dispatch(getAllEmail(data.email));
@@ -61,6 +89,7 @@ function ChatRoom() {
           dispatch(setGroupEmail(data.groups.group));
           data.groups.group.map((group) => {
             // FOR GROUP INCOMING MAIL || DO THIS WHEN FOR NEWLY CREATED GROUP
+            socket.emit("select_conversation", group._id);
             return socket.emit(
               "group logged in",
               `${group.groupName}: ${group._id} - ${state.user.email}`
@@ -102,6 +131,7 @@ function ChatRoom() {
     dispatch(setIsCalling(false));
     dispatch(setToggle(null));
     dispatch(getEmail([]));
+    dispatch(setInComingCall(false));
 
     socket.on("previous_video_requests", (data) => {
       if (data) {
@@ -120,17 +150,16 @@ function ChatRoom() {
       if (isCalling) {
         socket.emit("ignore_call", data);
       } else {
+        setCallee(data.caller);
         dispatch(setCaller(data));
-        if (
-          state.email.length > 0 &&
-          state.email.some((mail) => mail.header.from[0].email)
-        ) {
-          dispatch(
-            pushNotification({ name: data.caller, type: data.mailType })
-          );
+        dispatch(pushNotification({ name: data.caller, type: data.mailType }));
+        console.log("send_request: ", data, state?.email);
+        if (openPermission) {
+          dispatch(setInComingCall(true));
         }
       }
     });
+    // }
 
     socket.on("new group", (data) => {
       // Notification for joining a new group
@@ -146,27 +175,74 @@ function ChatRoom() {
         "group logged in",
         `${data.groupName}: ${data._id} - ${state.user.email}`
       );
+
+      socket.emit("select_conversation", data._id);
+      dispatch(
+        setReciever([
+          {
+            groupName: data.groupName,
+            users: data.users,
+            _id: data._id,
+          },
+        ])
+      );
+      dispatch(
+        setRecipient([
+          {
+            groupName: data.groupName,
+            users: data.users,
+            _id: data._id,
+          },
+        ])
+      );
     });
   }, [socket]);
 
-  // ISSUE: 153 in useVoiceChat.js -> Error: Connection failed. | at n.value (index.js:699:28) | at o._pc.onconnectionstatechange (index.js:118:12) -> ISSUE: No AUDIO
-  // TRY: Decrease the time in setTimeout or create a socket that will check if the other user get your signal before doing the peer.signal in setTimeout
-  // ISSUE:  154 in useVideoChat.js -> "Error: Connection failed. | at n.value (index.js:699:28) | at o._pc.onconnectionstatechange (index.js:118:12)"
-  // TRY: Decrease the time in setTimeout or create a socket that will check if the other user get your signal before doing the peer.signal in setTimeout
-  //  TypeError: t.peer.destoy is not a function
-  //     at n.<anonymous> (useVoiceChat.js:96:26)
-  //     at Et.emit (index.mjs:136:20)
-  //     at n.value (socket.js:498:20)
-  //     at n.value (socket.js:485:18)
-  //     at n.value (socket.js:455:22)
-  //     at Et.emit (index.mjs:136:20)
-  //     at manager.js:207:18
+  useEffect(() => {
+    if (openPermission && caller && state.mailNotification.length > 0) {
+      dispatch(setInComingCall(true));
+    }
+  }, [openPermission, caller, state.mailNotification]);
 
-  // TODO: When the user is in call, all users cant do a call on this. -> In socket.on("send_request"), isCalling ? send a response (decline) : DO "dispatch(setCaller(data)) && dispatch(pushNotification(data.caller))"
-  // ALGO: isCalling -> if acceptCall() -> setIsCalling(true)
+  useEffect(() => {
+    if (inComingCall) {
+      playRingtone();
+    } else {
+      stopRingtone();
+    }
+
+    return () => {
+      stopRingtone();
+    };
+  }, [inComingCall]);
+
+  // TODO 1: Add ring audio when someone is calling. Stop when the user accepted.
+  // TODO 2: When in voice/video call, Hold/block all the button except on the voice/video call
+
+  // ERROR 1: useVoiceChat.js & useVideoChat.js -> line 98 ->
+  // FIXED: do a test -> if it didn't work ? remove and do a test
+  // ERROR 2: In emailSlice.js -> pushNotification() -> It add even it is already in the redux state ->
+  // FIXED: Do a test on it.
+
+  // TODO 3: In close button modal for when calling -> the "X" button should also close/leave the VideoCall Page
+
+  // MESSAGE MODAL: Spike needs your permission to enable notifications
 
   return (
     <div className="ChatRoom">
+      {!openPermission && (
+        <div onClick={acceptPermission} className="notification__permission">
+          <div className="permission__container">
+            <h1 className="permission__h1">
+              Spike needs your permission to enable notifications
+            </h1>
+            <button className="permission__accept" onClick={acceptPermission}>
+              <AiOutlineCloseCircle />
+            </button>
+          </div>
+        </div>
+      )}
+      {isCalling && <div className="caller__divider"></div>}
       {/* SIDE BAR */}
       <div className="SideBar">
         <UserSection />
@@ -201,7 +277,12 @@ function ChatRoom() {
       {isActive ? <Contact /> : null}
       {!isCalling &&
         state.email.length > 0 &&
-        state.email.some((mail) => mail.header.from[0].email) &&
+        state.email.some(
+          (mail) =>
+            (mail.header.from[0].email &&
+              mail.header.from[0].email === callee) ||
+            (mail.header.subject[0] && mail.header.subject[0] === callee)
+        ) &&
         caller && <Notification caller={caller} />}
       {modal ? <Modal /> : null}
     </div>

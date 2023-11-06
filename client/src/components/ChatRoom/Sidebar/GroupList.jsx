@@ -29,6 +29,22 @@ function GroupList() {
   const [emails, setEmails] = useState([]);
   const { socket } = useOutletContext();
   const [newNotif, setNewNotif] = useState([]);
+  const [socketRoom, setSocketRoom] = useState(null);
+
+  const joinSocketRoom = (id) => {
+    if (socketRoom) {
+      socket.emit("leave convo", socketRoom); // socketRoom is the old convo -> go & leave convo
+
+      socket.on("on leave", (message) => {
+        // add the new socket
+        socket.emit("select_conversation", id);
+      });
+    } else {
+      socket.emit("select_conversation", id);
+    }
+
+    setSocketRoom(id);
+  };
 
   const groupSet = new Set(
     emailState.groupEmail.map((item) => `${item.groupName}: ${item._id}`)
@@ -86,7 +102,9 @@ function GroupList() {
 
   const onMessageSelect = (email) => {
     // TRY TO REMOVE ALSO IN newNotif state
-    dispatch(removeNotification(email.header.subject[0]));
+    dispatch(
+      removeNotification({ name: email.header.subject[0], type: "group" })
+    );
 
     const samp = emails.filter(
       (item) => item.header.subject[0] === email.header.subject[0]
@@ -123,7 +141,7 @@ function GroupList() {
     } else {
       dispatch(getEmail([email]));
     }
-    socket.emit("select_conversation", email.data._id);
+    // socket.emit("select_conversation", email.data._id);
   };
 
   const handleIncomingEmail = debounce((mails) => {
@@ -243,8 +261,10 @@ function GroupList() {
             >
               {Array.isArray(newNotif) &&
               newNotif.length > 0 &&
-              newNotif.includes(result.header.subject[0]) ? (
-                <h1 className="new__mailNotif">New mail</h1>
+              newNotif.find(
+                (notif) => notif.name === result.header.subject[0]
+              ) ? (
+                <h1 className="new__mailNotif">New Notification!</h1>
               ) : null}
               <div
                 className={`group__userAvatar icon__white ${result.data.background}`}
