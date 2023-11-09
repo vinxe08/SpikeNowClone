@@ -33,7 +33,7 @@ function GroupList() {
 
   const joinSocketRoom = (id) => {
     if (socketRoom) {
-      socket.emit("leave convo", socketRoom); // socketRoom is the old convo -> go & leave convo
+      socket.emit("leave convo", socketRoom);
 
       socket.on("on leave", (message) => {
         // add the new socket
@@ -92,7 +92,6 @@ function GroupList() {
           from: [{ email: emailState.user.email }],
           date: [data.timestamp],
           subject: [`${data.groupName}: ${data._id}`],
-          // to: [{ email: `${to}` }],
           to: recipient,
           type: "group",
         },
@@ -141,7 +140,6 @@ function GroupList() {
     } else {
       dispatch(getEmail([email]));
     }
-    // socket.emit("select_conversation", email.data._id);
   };
 
   const handleIncomingEmail = debounce((mails) => {
@@ -161,7 +159,7 @@ function GroupList() {
           state.email.length > 0 &&
           state.email[0].header.subject[0] === newEmail.header.subject[0]
         ) {
-          // try to add the the
+          // Dispatch the updated emails
           dispatch(getEmail([...state.email, newEmail]));
         }
 
@@ -173,6 +171,7 @@ function GroupList() {
             pushNotification({
               name: newEmail.header.subject[0],
               type: "group",
+              description: "New Notification!",
             })
           );
         }
@@ -214,7 +213,6 @@ function GroupList() {
             from: [{ email: emailState.user.email }],
             date: [data.timestamp],
             subject: [`${data.groupName}: ${data._id}`],
-            // to: [{ email: `${to}` }],
             to: recipient,
             type: "group",
           },
@@ -264,7 +262,7 @@ function GroupList() {
               newNotif.find(
                 (notif) => notif.name === result.header.subject[0]
               ) ? (
-                <h1 className="new__mailNotif">New Notification!</h1>
+                <h1 className="new__mailNotif">{newNotif.description}</h1>
               ) : null}
               <div
                 className={`group__userAvatar icon__white ${result.data.background}`}

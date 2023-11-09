@@ -100,15 +100,10 @@ export const emailSlice = createSlice({
           (notif) => notif.name !== action.payload.name
         )
       ) {
-        console.log("IF PAYLOAD: ", action.payload, state);
         state.mailNotification.push(action.payload);
-      } else {
-        console.log("ELSE PAYLOAD: ", action.payload, state);
       }
-      // console.log("ACTION PAYLOAD: ", action.payload, state);
     },
     removeNotification: (state, action) => {
-      console.log("EMAIL SLICE: ", state, action.payload);
       if (
         Array.isArray(state.mailNotification) &&
         state.mailNotification.length > 0 &&

@@ -50,6 +50,36 @@ function ChatRoom() {
   const [openPermission, setOpenPermission] = useState(false);
   const [callee, setCallee] = useState(null);
 
+  const checkNotificationReceiver = () => {
+    if (callee?.mailType === "group") {
+      if (
+        state.email?.some(
+          (mail) =>
+            mail.header.subject?.[0] && mail.header.subject?.[0] === callee.name
+        )
+      ) {
+        return true;
+      } else {
+        return false;
+      }
+    } else if (callee?.mailType === "single") {
+      if (
+        state.email.some(
+          (mail) =>
+            mail.header.from[0].email &&
+            mail.header.from[0].email === callee.name
+        ) &&
+        state.email[0].header.to.length === 1
+      ) {
+        return true;
+      } else {
+        return false;
+      }
+    } else {
+      return false;
+    }
+  };
+
   const acceptPermission = () => {
     setOpenPermission(true);
   };
@@ -60,14 +90,12 @@ function ChatRoom() {
         // Handle the play() promise error here
         console.error("Failed to play ringtone:", error);
       });
-      console.log("PLAY RINGTONE");
     }
   };
 
   const stopRingtone = () => {
     ringtone.pause();
     ringtone.currentTime = 0;
-    console.log("PAUSE RINGTONE");
   };
 
   const fetchUserInfo = async () => {
@@ -130,7 +158,6 @@ function ChatRoom() {
     dispatch(setCaller(null));
     dispatch(setIsCalling(false));
     dispatch(setToggle(null));
-    dispatch(getEmail([]));
     dispatch(setInComingCall(false));
 
     socket.on("previous_video_requests", (data) => {
@@ -150,10 +177,16 @@ function ChatRoom() {
       if (isCalling) {
         socket.emit("ignore_call", data);
       } else {
-        setCallee(data.caller);
+        setCallee({ name: data.caller, mailType: data.mailType });
         dispatch(setCaller(data));
-        dispatch(pushNotification({ name: data.caller, type: data.mailType }));
-        console.log("send_request: ", data, state?.email);
+        dispatch(
+          pushNotification({
+            name: data.caller,
+            type: data.mailType,
+            description: data.type,
+          })
+        );
+
         if (openPermission) {
           dispatch(setInComingCall(true));
         }
@@ -216,18 +249,6 @@ function ChatRoom() {
     };
   }, [inComingCall]);
 
-  // TODO 1: Add ring audio when someone is calling. Stop when the user accepted.
-  // TODO 2: When in voice/video call, Hold/block all the button except on the voice/video call
-
-  // ERROR 1: useVoiceChat.js & useVideoChat.js -> line 98 ->
-  // FIXED: do a test -> if it didn't work ? remove and do a test
-  // ERROR 2: In emailSlice.js -> pushNotification() -> It add even it is already in the redux state ->
-  // FIXED: Do a test on it.
-
-  // TODO 3: In close button modal for when calling -> the "X" button should also close/leave the VideoCall Page
-
-  // MESSAGE MODAL: Spike needs your permission to enable notifications
-
   return (
     <div className="ChatRoom">
       {!openPermission && (
@@ -277,12 +298,7 @@ function ChatRoom() {
       {isActive ? <Contact /> : null}
       {!isCalling &&
         state.email.length > 0 &&
-        state.email.some(
-          (mail) =>
-            (mail.header.from[0].email &&
-              mail.header.from[0].email === callee) ||
-            (mail.header.subject[0] && mail.header.subject[0] === callee)
-        ) &&
+        checkNotificationReceiver() &&
         caller && <Notification caller={caller} />}
       {modal ? <Modal /> : null}
     </div>

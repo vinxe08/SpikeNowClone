@@ -5,18 +5,19 @@ import { BsArchive, BsThreeDotsVertical, BsCameraVideo } from "react-icons/bs";
 import "./ContactInfo.css";
 import { useSelector, useDispatch } from "react-redux";
 import {
+  hideContactInfo,
   setCall,
   setIsCalling,
   setType,
   showContactInfo,
 } from "../../../features/show/showSlice";
 import { useOutletContext } from "react-router-dom";
+import { getEmail } from "../../../features/email/emailSlice";
 
 function ContactInfo() {
   const state = useSelector((state) => state.emailReducer);
   const dispatch = useDispatch();
   const hasType = state.email.filter((item) => item.header.type);
-  const [sendCall, setSendCall] = useState(null);
   const [recipient, setRecipient] = useState();
   const { socket } = useOutletContext();
   const recipients = useSelector((state) => state.emailReducer.recipients);
@@ -42,7 +43,6 @@ function ContactInfo() {
         name: state.email?.[0].header.to[0]?.name,
         email: state.email?.[0].header.to[0]?.email,
         type: "Video Call",
-        // caller: user.email,
         caller: state.email?.[0].header.type
           ? state.email?.[0].header.subject[0]
           : state.user.email,
@@ -56,7 +56,6 @@ function ContactInfo() {
       name: state.email?.[0].header.to[0]?.name,
       email: state.email?.[0].header.to[0]?.email,
       type: "Video Call",
-      // caller: user.email,
       caller: state.email?.[0].header.type
         ? state.email?.[0].header.subject[0]
         : state.user.email,
@@ -74,7 +73,13 @@ function ContactInfo() {
 
   return (
     <div className="ContactInfo">
-      <div className="arrow__back">
+      <div
+        onClick={() => {
+          dispatch(hideContactInfo());
+          dispatch(getEmail([]));
+        }}
+        className="arrow__back"
+      >
         <IoIosArrowBack />
       </div>
       <div
@@ -82,7 +87,6 @@ function ContactInfo() {
         className="contact__info"
       >
         <h1 className="contact__name">
-          {/* ISSUE: hasType[0].data._id -> ._id is undefined */}
           {hasType.length > 0
             ? hasType[0].header.subject[0].replace(
                 `: ${hasType[0].data._id}`,

@@ -12,7 +12,7 @@ export function useVideoChat() {
   const socketRef = useRef();
   const userVideo = useRef();
   const peersRef = useRef([]);
-  const [iceServers, setIceServers] = useState([]); // ADDITION
+  const [iceServers, setIceServers] = useState([]);
 
   const user = useSelector((state) => state.emailReducer.user.email);
   const recipient = useSelector((state) => state.emailReducer.recipients);
@@ -169,7 +169,7 @@ export function useVideoChat() {
       trickle: false,
       stream,
       config: {
-        iceServers: [...iceServers, { url: "stun:stun.1und1.de:3478" }], // ADDITION
+        iceServers: [...iceServers, { url: "stun:stun.1und1.de:3478" }],
       },
     });
 
@@ -189,12 +189,10 @@ export function useVideoChat() {
       peer.signal(incomingSignal);
     }, 1000);
 
-    // peer.signal(incomingSignal);
-
     return peer;
   }
 
-  // Leave Call:
+  // For Leaving the Call
   const leaveCall = () => {
     socketRef.current.emit("leave call");
     if (userVideo.current) {

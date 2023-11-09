@@ -1,25 +1,22 @@
 .VoiceChatPage {
   background: black;
-
   flex-shrink: 0;
-  /* flex: 1; */
-  /* min-width: 50rem; */
   width: 20rem;
   height: 100vh;
+  z-index: 15;
 }
 
 .voicecall__container {
   display: flex;
   flex-direction: column;
   height: 100%;
-
   overflow-y: auto;
 }
 
 .close {
   font-size: 1.9rem;
   margin-top: 8px;
-  z-index: 10;
+  z-index: 15;
 }
 
 .voice__header {
@@ -27,7 +24,6 @@
   font-size: 1.3rem;
   justify-content: space-between;
   align-items: center;
-  /* border-bottom: 1px solid gray; */
   height: 2.95rem;
   color: white;
   padding: 0 0.8rem;
@@ -41,7 +37,6 @@
 .voicecall__setup {
   display: flex;
   flex-direction: column;
-  /* height: 90vh; */
 }
 
 .voice__user {
@@ -59,7 +54,6 @@
 
 .my__voice {
   display: flex;
-  /* width: 10rem; */
   flex-direction: column;
   padding: 1rem;
   border-radius: 1rem;
@@ -69,9 +63,6 @@
 }
 
 .voice__camera {
-  /* height: 15rem; */
-  /* width: 18rem; */
-  /* border-radius: 1rem; */
   display: flex;
   flex-direction: column;
 }
@@ -88,7 +79,6 @@
 
 .recipient__voice {
   display: flex;
-  /* width: 10rem; */
   flex-direction: column;
   padding: 1rem;
   border-radius: 1rem;

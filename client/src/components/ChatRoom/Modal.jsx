@@ -232,11 +232,7 @@ function Modal() {
           ) : null}
         </div>
         <div className="group__button">
-          <button
-            // disabled={groupInfo.groupName === "" && !value}
-            onClick={createGroup}
-            className="arrow__button"
-          >
+          <button onClick={createGroup} className="arrow__button">
             <FaLocationArrow />
           </button>
         </div>

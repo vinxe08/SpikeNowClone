@@ -30,7 +30,7 @@ function MessageList({ email }) {
 
   const joinSocketRoom = (id) => {
     if (socketRoom) {
-      socket.emit("leave convo", socketRoom); // socketRoom is the old convo -> go & leave convo
+      socket.emit("leave convo", socketRoom);
 
       socket.on("on leave", (message) => {
         // add the new socket
@@ -61,14 +61,6 @@ function MessageList({ email }) {
           )
       );
 
-      // const userRecipient = emailState.recipients.filter(
-      //   (recipient) =>
-      //     recipient.users.includes(emailState.user.email) &&
-      //     recipient.users.includes(
-      //       email[0].header.to[0].email || email[0].header.to[0]
-      //     )
-      // );
-
       if (recipients.length > 0) {
         dispatch(setReciever(recipients));
         joinSocketRoom(recipients[0]?._id);
@@ -84,7 +76,7 @@ function MessageList({ email }) {
                 "Content-Type": "application/json",
               },
               body: JSON.stringify({
-                email: email[0].header.to[0].email || email[0].header.to[0], //
+                email: email[0].header.to[0].email || email[0].header.to[0],
                 receiver:
                   email[0].header.from[0].email || email[0].header.from[0],
               }),
@@ -130,21 +122,10 @@ function MessageList({ email }) {
   };
 
   useEffect(() => {
-    // const mailSender = email.find(
-    //   (mail) =>
-    //     mail.header.from[0].email ||
-    //     mail.header.from[0] !== emailState.user.email
-    // );
-
     const checkUser = emailState.email.filter(
-      (item) => item.header.from[0]?.email !== emailState.user.email
-    );
-
-    console.log(
-      "NOTIFICATION: ",
-      emailState.mailNotification,
-      email,
-      emailState.email
+      (item) =>
+        item.header.from[0]?.email !== emailState.user.email &&
+        !item.header?.subject?.[0]
     );
 
     const singleNotif = emailState?.mailNotification?.find(
@@ -162,23 +143,19 @@ function MessageList({ email }) {
     if (
       hasType.length > 0 &&
       groupNotif &&
-      // emailState.email[0].header.subject[
-      //   0 !== emailState.mailNotification[0].name
-      // ]
-      email?.[0]?.header.subject[0] !== emailState.email?.[0]?.header.subject[0]
+      email?.[0]?.header.subject?.[0] !==
+        emailState.email?.[0]?.header.subject?.[0]
     ) {
       setNewNotif(groupNotif);
-      console.log("IF-GROUP: ", groupNotif);
     } else if (
       singleNotif &&
       email[0].header.from[0].email !== checkUser?.[0]?.header.from[0]?.email
     ) {
       setNewNotif(singleNotif);
-      console.log("IF-SINGLE: ", singleNotif);
     } else {
       setNewNotif(null);
     }
-  }, [emailState.mailNotification]);
+  }, [emailState.mailNotification, emailState.email]);
 
   useEffect(() => {
     const joinRoom = async () => {
@@ -194,14 +171,6 @@ function MessageList({ email }) {
               email[0].header.to[0].email || email[0].header.to[0]
             )
         );
-
-        // const userRecipient = emailState.recipients.filter(
-        //   (recipient) =>
-        //     recipient.users.includes(emailState.user.email) &&
-        //     recipient.users.includes(
-        //       email[0].header.to[0].email || email[0].header.to[0]
-        //     )
-        // );
 
         if (recipients.length > 0) {
           dispatch(setReciever(recipients));
@@ -245,7 +214,9 @@ function MessageList({ email }) {
 
   return (
     <div onClick={dispatchEmail} className="MessageList">
-      {newNotif ? <h1 className="new__mailNotif">New Notification!</h1> : null}
+      {newNotif ? (
+        <h1 className="new__mailNotif">{newNotif?.description}</h1>
+      ) : null}
       {hasType.length > 0 ? (
         <div className="message__avatarIcon">
           <HiUserGroup />
@@ -300,3 +271,15 @@ function MessageList({ email }) {
 }
 
 export default MessageList;
+
+// 0:
+// body: "Hi Vinxe - from binxe08@outlook.com"
+// header :
+//   date: ['Mon, 25 Sep 2023 14:19:18 +0000']
+//   from: Array(1)
+//     0:{email: 'binxe08@outlook.com'}
+//     length:1
+//     [[Prototype]]: Array(0)
+//     to:[{…}]
+//     [[Prototype]]: Object
+//     [[Prototype]]:Object

@@ -100,7 +100,6 @@ io.on("connection", (socket) => {
   socket.on("join room", ({ roomID, user }) => {
     if (users[roomID]) {
       const length = users[roomID].length;
-      // TODO: REMOVE THIS FOR DEPLOYMENT
       if (length === 4) {
         socket.emit("room full");
         return;
@@ -162,10 +161,6 @@ io.on("connection", (socket) => {
     socket.leave();
   });
 });
-
-// Database connection in MongoDB
-// const dbConfig = "mongodb://localhost:27017";
-// const dbName = "spike-clone";
 
 mongoose
   .connect(`${process.env.MONGO_URI}`, {

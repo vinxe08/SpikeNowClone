@@ -3,7 +3,6 @@ import { useDispatch, useSelector } from "react-redux";
 import { useOutletContext } from "react-router-dom";
 import FadeLoader from "react-spinners/FadeLoader";
 import {
-  addAllEmail,
   addEmail,
   pushNotification,
   setRecipient,
@@ -128,22 +127,10 @@ function ContactList() {
 
   const handleIncomingEmail = debounce((mails) => {
     mails.slice(-1).map((newEmail) => {
-      const getSender = newEmail.header.from[0].match(/<([^>]+)>/)?.[1];
       const groupReceiver = newEmail.header.to[0].split(", ");
 
       // FOR GROUP MAIL
       if (groupReceiver.length > 1 && newEmail.header.subject.length > 0) {
-        // if (
-        //   !sortData[newEmail.header.subject[0]]?.some(
-        //     (data) =>
-        //       data.body === newEmail.body &&
-        //       data.header.date[0] === newEmail.header.date[0]
-        //   )
-        // ) {
-        // sortData[newEmail.header.subject[0]].push(newEmail);
-        // setResult(sortData);
-        // dispatch(addAllEmail(newEmail));
-
         setResult((prevState) => {
           return {
             ...prevState,
@@ -159,12 +146,6 @@ function ContactList() {
         if (
           email.email.length > 0 &&
           email?.email?.[0]?.header.subject?.[0] === newEmail.header.subject[0]
-          //   &&
-          // !email.email.some(
-          //   (data) =>
-          //     data.body === newEmail.body &&
-          //     data.header.date[0] === newEmail.header.date[0]
-          // )
         ) {
           dispatch(addEmail(newEmail));
         }
@@ -172,54 +153,26 @@ function ContactList() {
         // For Notification
         if (
           email.email.length === 0 &&
-          // !email.mailNotification?.includes(newEmail.header.subject[0])
           email?.email?.[0]?.header.subject?.[0] !== newEmail.header.subject[0]
-
-          // !email.email[0] ||
-          // email.email[0] !== sortData[newEmail.header.from[0]][0]
         ) {
-          dispatch(
-            pushNotification({
-              name: newEmail.header.subject[0],
-              type: "group",
-            })
-          );
+          setTimeout(() => {
+            dispatch(
+              pushNotification({
+                name: newEmail.header.subject[0],
+                type: "group",
+                description: "New Notification!",
+              })
+            );
+          }, 500);
         }
       } else {
-        // // FOR WHEN THE MAIL IS SHOWN/OPEN
-        if (
-          // !sortData[newEmail.header.from[0]].some(
-          //   (data) =>
-          //     data.body === newEmail.body &&
-          //     data.header.date[0] === newEmail.header.date[0]
-          // ) &&
-          email.email[0] === sortData[newEmail.header.from[0]][0]
-        ) {
+        // FOR SINGLE EMAIL WHEN THE MAIL IS SHOWN/OPEN
+        if (email.email[0] === sortData[newEmail.header.from[0]][0]) {
           dispatch(addEmail(newEmail));
         }
 
-        // For Notification
-        if (
-          !email.email[0] ||
-          email.email[0] !== sortData[newEmail.header.from[0]][0]
-        ) {
-          dispatch(
-            pushNotification({ name: newEmail.header.from[0], type: "single" })
-          );
-        }
-
         // For Pushing data in contact list
-        if (
-          sortData.hasOwnProperty(newEmail.header.from[0])
-          // &&
-          // !sortData[newEmail.header.from[0]].some(
-          //   (data) =>
-          //     data.body === newEmail.body &&
-          //     data.header.date[0] === newEmail.header.date[0]
-          // )
-        ) {
-          // sortData[newEmail.header.from[0]].push(newEmail);
-          // setResult(sortData);
+        if (sortData.hasOwnProperty(newEmail.header.from[0])) {
           setResult((prevState) => {
             return {
               ...prevState,
@@ -229,21 +182,23 @@ function ContactList() {
               ],
             };
           });
-          // dispatch(addAllEmail(newEmail));
         }
-        // else if (
-        //   !sortData.hasOwnProperty(getSender || newEmail.header.from[0]) &&
-        //   !sortData[getSender || newEmail.header.from[0]].some(
-        //     (data) =>
-        //       data.body === newEmail.body &&
-        //       data.header.date[0] === newEmail.header.date[0]
-        //   )
-        // ) {
-        //   sortData[getSender || newEmail.header.from[0]] = [];
-        //   sortData[getSender || newEmail.header.from[0]].push(newEmail);
-        //   setResult(sortData);
-        //   dispatch(addAllEmail(newEmail));
-        // }
+
+        // For Notification
+        if (
+          !email.email[0] ||
+          email.email[0] !== sortData[newEmail.header.from[0]][0]
+        ) {
+          setTimeout(() => {
+            dispatch(
+              pushNotification({
+                name: newEmail.header.from[0],
+                type: "single",
+                description: "New Notification!",
+              })
+            );
+          }, 500);
+        }
       }
     });
   }, 1000);

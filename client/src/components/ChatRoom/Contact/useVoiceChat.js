@@ -12,7 +12,7 @@ export function useVoiceChat() {
   const socketRef = useRef();
   const userVoice = useRef();
   const peersRef = useRef([]);
-  const [iceServers, setIceServers] = useState([]); // ADDITION
+  const [iceServers, setIceServers] = useState([]);
 
   const user = useSelector((state) => state.emailReducer.user.email);
   const recipient = useSelector((state) => state.emailReducer.recipients);
@@ -138,7 +138,7 @@ export function useVoiceChat() {
       trickle: false,
       stream,
       config: {
-        iceServers: [...iceServers, { url: "stun:stun.1und1.de:3478" }], // ADDITION
+        iceServers: [...iceServers, { url: "stun:stun.1und1.de:3478" }],
       },
     });
 
@@ -169,7 +169,7 @@ export function useVoiceChat() {
       trickle: false,
       stream,
       config: {
-        iceServers: [...iceServers, { url: "stun:stun.1und1.de:3478" }], // ADDITION
+        iceServers: [...iceServers, { url: "stun:stun.1und1.de:3478" }],
       },
     });
 
@@ -188,8 +188,6 @@ export function useVoiceChat() {
     setTimeout(() => {
       peer.signal(incomingSignal);
     }, 1000);
-
-    // peer.signal(incomingSignal);
 
     return peer;
   }

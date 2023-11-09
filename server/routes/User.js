@@ -3,7 +3,6 @@ const router = express.Router();
 const Imap = require("imap"),
   inspect = require("util").inspect;
 const simpleParser = require("mailparser").simpleParser;
-// const process = require("process");
 
 const { getIncomingEmail, connectionError } = require("../lib/socketManager");
 
@@ -120,7 +119,6 @@ router.post("/users", async (req, res) => {
           parseEmail()
             .then(({ emails }) => {
               fetchNewEmail(emails, email);
-              // im.end();
             })
             .catch((error) => {
               fetchNewEmail(error);

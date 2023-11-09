@@ -60,7 +60,6 @@ function Contact() {
         name: state[0].header.to[0]?.name,
         email: state[0].header.to[0]?.email,
         type: "Video Call",
-        // caller: user.email,
         caller: state[0].header.type ? state[0].header.subject[0] : user.email,
         mailType: state[0].header.type ? "group" : "single",
       });
@@ -71,7 +70,6 @@ function Contact() {
         name: state[0].header.to[0]?.name,
         email: state[0].header.to[0]?.email,
         type: "Video Call",
-        // caller: user.email,
         caller: state[0].header.type ? state[0].header.subject[0] : user.email,
         mailType: state[0].header.type ? "group" : "single",
       });
@@ -81,7 +79,6 @@ function Contact() {
         name: state[0].header.to[0]?.name,
         email: state[0].header.to[0]?.email,
         type: "Voice Call",
-        // caller: user.email,
         caller: state[0].header.type ? state[0].header.subject[0] : user.email,
         mailType: state[0].header.type ? "group" : "single",
       });
@@ -92,7 +89,6 @@ function Contact() {
         name: state[0].header.to[0]?.name,
         email: state[0].header.to[0]?.email,
         type: "Voice Call",
-        // caller: user.email,
         caller: state[0].header.type ? state[0].header.subject[0] : user.email,
         mailType: state[0].header.type ? "group" : "single",
       });
@@ -118,6 +114,10 @@ function Contact() {
       setSendCall(call);
     }
   }, [call]);
+
+  useEffect(() => {
+    setSendCall(null);
+  }, []);
 
   return (
     <div className="Contact">
@@ -162,7 +162,6 @@ function Contact() {
         <div className="threads__section">
           {/* THREAD LIST */}
           <h1 className="threads__title">THREADS</h1>
-          {/* THREADS */}
           {state?.length > 0
             ? state
                 .filter((mail) => mail.body)
