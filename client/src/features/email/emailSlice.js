@@ -9,6 +9,7 @@ const initialState = {
   toggle: false,
   receiver: null,
   mailNotification: [],
+  rejectCalls: [],
 };
 
 export const emailSlice = createSlice({
@@ -123,6 +124,42 @@ export const emailSlice = createSlice({
         );
       }
     },
+    removeAllCallNotification: (state) => {
+      if (
+        Array.isArray(state.mailNotification) &&
+        state.mailNotification.length > 0
+      ) {
+        state.mailNotification = state.mailNotification.filter(
+          (item) => !item.hasOwnProperty("request")
+        );
+      }
+    },
+    pushRejectCall: (state, action) => {
+      if (!Array.isArray(state.rejectCalls)) {
+        state.rejectCalls = [];
+      }
+
+      if (
+        state.rejectCalls.length === 0 ||
+        state.rejectCalls.some((calls) => calls.id !== action.payload.id)
+      ) {
+        state.rejectCalls.push(action.payload);
+      }
+    },
+    removeRejectCall: (state, action) => {
+      if (
+        Array.isArray(state.rejectCalls) &&
+        state.rejectCalls.length > 0 &&
+        state.rejectCalls.find((notif) => notif.id === action.payload?.id)
+      ) {
+        state.rejectCalls.splice(
+          state.rejectCalls.findIndex(
+            (notif) => notif.id === action.payload.id
+          ),
+          1
+        );
+      }
+    },
   },
 });
 
@@ -139,6 +176,10 @@ export const {
   pushGroupEmail,
   pushNotification,
   removeNotification,
+  removeAllCallNotification,
+  removeSingleCallNotification,
+  pushRejectCall,
+  removeRejectCall,
 } = emailSlice.actions;
 
 export default emailSlice.reducer;

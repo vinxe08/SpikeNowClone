@@ -1,5 +1,5 @@
 import React from "react";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { IoClose } from "react-icons/io5";
 import "./Notification.css";
 import { setCaller, setIsCalling } from "../../../features/show/showSlice";
@@ -9,11 +9,16 @@ import { useOutletContext } from "react-router-dom";
 function CallingNotification({ caller, modal }) {
   const dispatch = useDispatch();
   const { socket } = useOutletContext();
+  const user = useSelector((state) => state.emailReducer.user);
 
   const ignoreCall = () => {
     dispatch(setCaller(null));
     dispatch(setIsCalling(false));
-    socket.emit("ignore_call", caller);
+    socket.emit("ignore_call", {
+      ...caller,
+      ignorer: user.email,
+      ignoreLocation: "CallingNotification.jsx",
+    });
     modal();
   };
 

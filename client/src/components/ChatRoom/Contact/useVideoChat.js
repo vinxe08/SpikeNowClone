@@ -2,7 +2,11 @@ import { useEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import Peer from "simple-peer";
 import io from "socket.io-client";
-import { setIsCalling } from "../../../features/show/showSlice";
+import {
+  setCall,
+  setIsCalling,
+  setOnCall,
+} from "../../../features/show/showSlice";
 import { Toast } from "../../../lib/sweetalert";
 import { getTurnCredentials } from "../../../lib/twilio";
 
@@ -199,6 +203,9 @@ export function useVideoChat() {
       userVideo.current.srcObject.getTracks().forEach((track) => track.stop());
       dispatch(setIsCalling(false));
     }
+    dispatch(setOnCall(false));
+    dispatch(setCall(null));
+    setPeers(null);
   };
 
   return {

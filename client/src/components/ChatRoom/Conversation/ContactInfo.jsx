@@ -12,7 +12,7 @@ import {
   showContactInfo,
 } from "../../../features/show/showSlice";
 import { useOutletContext } from "react-router-dom";
-import { getEmail } from "../../../features/email/emailSlice";
+import { getEmail, setToggle } from "../../../features/email/emailSlice";
 
 function ContactInfo() {
   const state = useSelector((state) => state.emailReducer);
@@ -25,12 +25,12 @@ function ContactInfo() {
   const selectedRecipient = recipients?.filter(
     (data) =>
       data.users.includes(
-        state.email?.[0].header.from?.[0]?.email ||
-          state.email?.[0].header.from?.[0]
+        state.email?.[0]?.header?.from?.[0]?.email ||
+          state.email?.[0]?.header?.from?.[0]
       ) &&
       data.users.includes(
-        state.email?.[0].header.to?.[0]?.email ||
-          state.email?.[0].header.to?.[0]
+        state.email?.[0]?.header.to?.[0]?.email ||
+          state.email?.[0]?.header?.to?.[0]
       )
   );
 
@@ -41,7 +41,7 @@ function ContactInfo() {
       setCall({
         id: recipient[0]._id,
         name: state.email?.[0].header.to[0]?.name,
-        email: state.email?.[0].header.to[0]?.email,
+        email: state.user.email,
         type: "Video Call",
         caller: state.email?.[0].header.type
           ? state.email?.[0].header.subject[0]
@@ -54,7 +54,7 @@ function ContactInfo() {
     socket.emit("create_request", {
       id: recipient[0]._id,
       name: state.email?.[0].header.to[0]?.name,
-      email: state.email?.[0].header.to[0]?.email,
+      email: state.user.email,
       type: "Video Call",
       caller: state.email?.[0].header.type
         ? state.email?.[0].header.subject[0]
@@ -77,6 +77,7 @@ function ContactInfo() {
         onClick={() => {
           dispatch(hideContactInfo());
           dispatch(getEmail([]));
+          // dispatch(setToggle(null));
         }}
         className="arrow__back"
       >

@@ -12,6 +12,7 @@ import { useOutletContext } from "react-router-dom";
 import { HiUserGroup } from "react-icons/hi";
 import { Toast } from "../../../lib/sweetalert";
 import { truncate } from "../../../lib/truncate";
+import { setCall, setCaller } from "../../../features/show/showSlice";
 
 function MessageList({ email }) {
   const emailState = useSelector((state) => state.emailReducer);
@@ -99,6 +100,7 @@ function MessageList({ email }) {
       }
     }
 
+    dispatch(setCaller(newNotif?.request));
     dispatch(removeNotification(newNotif));
     dispatch(getEmail(email));
     dispatch(setToggle("single"));

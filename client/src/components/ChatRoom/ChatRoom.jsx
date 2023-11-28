@@ -12,6 +12,7 @@ import {
   getEmail,
   pushGroupEmail,
   pushNotification,
+  removeRejectCall,
   setGroupEmail,
   setReciever,
   setRecipient,
@@ -22,6 +23,7 @@ import Swal from "sweetalert2";
 import { Toast } from "../../lib/sweetalert";
 import {
   hideContactInfo,
+  setCall,
   setCaller,
   setInComingCall,
   setIsCalling,
@@ -42,32 +44,36 @@ function ChatRoom() {
   const isActive = useSelector((state) => state.showReducer.active);
   const isCalling = useSelector((state) => state.showReducer.isCalling);
   const inComingCall = useSelector((state) => state.showReducer.inComingCall);
-  const caller = useSelector((state) => state.showReducer.caller);
+  const callerRequest = useSelector((state) => state.showReducer.caller);
   const menu = useSelector((state) => state.menuReducer.menu);
   const modal = useSelector((state) => state.menuReducer.modalCreate);
   const [loading, setLoading] = useState(false);
   const [ringtone] = useState(new Audio(sound));
   const [openPermission, setOpenPermission] = useState(false);
   const [callee, setCallee] = useState(null);
+  const [callerInfo, setCallerInfo] = useState(null);
+
+  const call = useSelector((state) => state.showReducer.call);
 
   const checkNotificationReceiver = () => {
-    if (callee?.mailType === "group") {
+    if (callee?.mailType === "group" && callerInfo) {
       if (
         state.email?.some(
           (mail) =>
-            mail.header.subject?.[0] && mail.header.subject?.[0] === callee.name
+            mail.header.subject?.[0] &&
+            mail.header.subject?.[0] === callerInfo?.caller
         )
       ) {
         return true;
       } else {
         return false;
       }
-    } else if (callee?.mailType === "single") {
+    } else if (callee?.mailType === "single" && callerInfo) {
       if (
         state.email.some(
           (mail) =>
             mail.header.from[0].email &&
-            mail.header.from[0].email === callee.name
+            mail.header.from[0].email === callerInfo?.caller
         ) &&
         state.email[0].header.to.length === 1
       ) {
@@ -159,10 +165,28 @@ function ChatRoom() {
     dispatch(setIsCalling(false));
     dispatch(setToggle(null));
     dispatch(setInComingCall(false));
+    dispatch(setCall(null));
 
-    socket.on("previous_video_requests", (data) => {
-      if (data) {
-        dispatch(setCaller(data[0]));
+    socket.on("previous_video_requests", (prevData) => {
+      if (prevData && !isCalling) {
+        prevData.map((data) => {
+          if (
+            Array.isArray(state.rejectCalls) &&
+            state.rejectCalls.length > 0 &&
+            !state.rejectCalls.find((rejectCalls) => rejectCalls.id === data.id)
+          ) {
+            dispatch(
+              pushNotification({
+                name: data.caller,
+                type: data.mailType,
+                description: data.type,
+                request: data,
+              })
+            );
+          } else {
+            dispatch(removeRejectCall(data));
+          }
+        });
       } else {
         dispatch(setCaller(null));
       }
@@ -173,17 +197,26 @@ function ChatRoom() {
   }, []);
 
   useEffect(() => {
-    socket.on("send_request", (data) => {
+    const receiveRequest = (data) => {
       if (isCalling) {
-        socket.emit("ignore_call", data);
+        socket.emit("ignore_call", {
+          ...data,
+          ignorer: state.user.email,
+          ignoreLocation: "SEND REQUEST",
+        });
+        dispatch(setCaller(null));
       } else {
-        setCallee({ name: data.caller, mailType: data.mailType });
-        dispatch(setCaller(data));
+        // setCallee({ name: data.caller, mailType: data.mailType });
+        if (!callerRequest) {
+          dispatch(setCaller(data));
+        }
+
         dispatch(
           pushNotification({
             name: data.caller,
             type: data.mailType,
             description: data.type,
+            request: data,
           })
         );
 
@@ -191,7 +224,8 @@ function ChatRoom() {
           dispatch(setInComingCall(true));
         }
       }
-    });
+    };
+    socket.on("send_request", receiveRequest);
     // }
 
     socket.on("new group", (data) => {
@@ -229,16 +263,23 @@ function ChatRoom() {
         ])
       );
     });
-  }, [socket]);
+
+    return () => {
+      socket.off("send_request", receiveRequest);
+    };
+  }, [socket, isCalling]);
 
   useEffect(() => {
-    if (openPermission && caller && state.mailNotification.length > 0) {
+    // if (openPermission && caller && state.mailNotification.length > 0) {
+    //   dispatch(setInComingCall(true));
+    // }
+    if (openPermission && state.mailNotification.length > 0) {
       dispatch(setInComingCall(true));
     }
-  }, [openPermission, caller, state.mailNotification]);
+  }, [openPermission, state.mailNotification]);
 
   useEffect(() => {
-    if (inComingCall) {
+    if (inComingCall && !isCalling) {
       playRingtone();
     } else {
       stopRingtone();
@@ -248,6 +289,25 @@ function ChatRoom() {
       stopRingtone();
     };
   }, [inComingCall]);
+
+  useEffect(() => {
+    if (callerRequest) {
+      setCallerInfo(callerRequest);
+      setCallee({
+        name: callerRequest.caller,
+        mailType: callerRequest.mailType,
+      });
+    } else {
+      setCallerInfo(null);
+      setCallee(null);
+    }
+  }, [callerRequest]);
+
+  useEffect(() => {
+    console.log("NOTIFICATION: ", state.mailNotification);
+  }, [state.mailNotification]);
+
+  // ISSUE 1: IN GROUP VIDEO CHAT 2nd CALL, IN CALLER, SOMETIMES TWO CALLEE POP UP ON VIDEO
 
   return (
     <div className="ChatRoom">
@@ -299,7 +359,7 @@ function ChatRoom() {
       {!isCalling &&
         state.email.length > 0 &&
         checkNotificationReceiver() &&
-        caller && <Notification caller={caller} />}
+        callerInfo && <Notification caller={callerInfo} />}
       {modal ? <Modal /> : null}
     </div>
   );

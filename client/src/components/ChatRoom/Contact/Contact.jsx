@@ -26,6 +26,8 @@ function Contact() {
   const user = useSelector((state) => state.emailReducer.user);
   const [recipient, setRecipient] = useState();
   const call = useSelector((state) => state.showReducer.call);
+  const caller = useSelector((state) => state.showReducer.caller);
+  const onCall = useSelector((state) => state.showReducer.onCall);
 
   const [sendCall, setSendCall] = useState(null);
   const selectedRecipient = recipients?.filter(
@@ -58,7 +60,7 @@ function Contact() {
       setSendCall({
         id: recipient[0]._id,
         name: state[0].header.to[0]?.name,
-        email: state[0].header.to[0]?.email,
+        email: user.email,
         type: "Video Call",
         caller: state[0].header.type ? state[0].header.subject[0] : user.email,
         mailType: state[0].header.type ? "group" : "single",
@@ -68,7 +70,7 @@ function Contact() {
       socket.emit("create_request", {
         id: recipient[0]._id,
         name: state[0].header.to[0]?.name,
-        email: state[0].header.to[0]?.email,
+        email: user.email,
         type: "Video Call",
         caller: state[0].header.type ? state[0].header.subject[0] : user.email,
         mailType: state[0].header.type ? "group" : "single",
@@ -77,7 +79,7 @@ function Contact() {
       setSendCall({
         id: recipient[0]._id,
         name: state[0].header.to[0]?.name,
-        email: state[0].header.to[0]?.email,
+        email: user.email,
         type: "Voice Call",
         caller: state[0].header.type ? state[0].header.subject[0] : user.email,
         mailType: state[0].header.type ? "group" : "single",
@@ -87,7 +89,7 @@ function Contact() {
       socket.emit("create_request", {
         id: recipient[0]._id,
         name: state[0].header.to[0]?.name,
-        email: state[0].header.to[0]?.email,
+        email: user.email,
         type: "Voice Call",
         caller: state[0].header.type ? state[0].header.subject[0] : user.email,
         mailType: state[0].header.type ? "group" : "single",
@@ -96,28 +98,47 @@ function Contact() {
   };
 
   useEffect(() => {
-    socket.on("ignore_response", (data) => {
-      dispatch(setIsCalling(false));
-      alert("CALL IGNORED");
-      // ADD MODAL FOR CALL IGNORED
-      setSendCall(null);
-      dispatch(setCall(null));
-    });
+    const onIgnoreResponse = (data) => {
+      if (call) {
+        if (data.caller === call?.caller) {
+          dispatch(setIsCalling(false));
+          alert("CALL IGNORED IGNORE_RESPONSE");
+          setSendCall(null);
+          dispatch(setCall(null));
+        }
+      }
+    };
 
-    socket.on("on_accept", (data) => {
-      setSendCall(null);
-    });
-  }, [socket]);
+    const onAcceptCall = (data) => {
+      if (call) {
+        if (data.caller !== call?.caller && data.email !== user.email) {
+          dispatch(setIsCalling(false));
+          alert("CALL IGNORED ON ACCEPT");
+          setSendCall(null);
+          dispatch(setCall(null));
+        } else {
+          // remove the notification
+          setSendCall(null);
+        }
+      }
+    };
+
+    socket.on("ignore_response", onIgnoreResponse);
+    socket.on("on_accept", onAcceptCall);
+
+    return () => {
+      socket.off("on_accept", onAcceptCall);
+      socket.off("ignore_response", onIgnoreResponse);
+    };
+  }, [socket, call]);
 
   useEffect(() => {
     if (call) {
       setSendCall(call);
+    } else {
+      setSendCall(null);
     }
   }, [call]);
-
-  useEffect(() => {
-    setSendCall(null);
-  }, []);
 
   return (
     <div className="Contact">
