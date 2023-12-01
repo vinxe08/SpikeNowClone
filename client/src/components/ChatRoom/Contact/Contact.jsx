@@ -26,8 +26,8 @@ function Contact() {
   const user = useSelector((state) => state.emailReducer.user);
   const [recipient, setRecipient] = useState();
   const call = useSelector((state) => state.showReducer.call);
-  const caller = useSelector((state) => state.showReducer.caller);
-  const onCall = useSelector((state) => state.showReducer.onCall);
+  // const caller = useSelector((state) => state.showReducer.caller);
+  // const onCall = useSelector((state) => state.showReducer.onCall);
 
   const [sendCall, setSendCall] = useState(null);
   const selectedRecipient = recipients?.filter(
@@ -102,7 +102,7 @@ function Contact() {
       if (call) {
         if (data.caller === call?.caller) {
           dispatch(setIsCalling(false));
-          alert("CALL IGNORED IGNORE_RESPONSE");
+          alert("CALL IGNORED");
           setSendCall(null);
           dispatch(setCall(null));
         }
@@ -113,7 +113,7 @@ function Contact() {
       if (call) {
         if (data.caller !== call?.caller && data.email !== user.email) {
           dispatch(setIsCalling(false));
-          alert("CALL IGNORED ON ACCEPT");
+          alert("CALL IGNORED");
           setSendCall(null);
           dispatch(setCall(null));
         } else {

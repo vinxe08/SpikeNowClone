@@ -56,9 +56,11 @@ function VoiceChatPage() {
             </div>
           )}
 
-          {peers.map((voice) => (
-            <Audio key={voice.peerID} voice={voice} />
-          ))}
+          {peers
+            .filter((peer) => peer.user !== user)
+            .map((voice) => (
+              <Audio key={voice.peerID} voice={voice} />
+            ))}
         </div>
       </div>
     </div>

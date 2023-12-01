@@ -71,6 +71,7 @@ export function useVideoChat() {
               });
               peers.push({ peer, user: user.user, peerID: user.userID });
             });
+
             setPeers(peers);
           });
 

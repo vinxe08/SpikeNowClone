@@ -59,9 +59,11 @@ function VideoCallPage() {
             </div>
           )}
 
-          {peers.map((video) => (
-            <Video key={video.peerID} video={video} />
-          ))}
+          {peers
+            .filter((peer) => peer.user !== user)
+            .map((video) => (
+              <Video key={video.peerID} video={video} />
+            ))}
         </div>
       </div>
     </div>

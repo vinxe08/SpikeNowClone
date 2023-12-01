@@ -53,8 +53,6 @@ function ChatRoom() {
   const [callee, setCallee] = useState(null);
   const [callerInfo, setCallerInfo] = useState(null);
 
-  const call = useSelector((state) => state.showReducer.call);
-
   const checkNotificationReceiver = () => {
     if (callee?.mailType === "group" && callerInfo) {
       if (
@@ -273,7 +271,11 @@ function ChatRoom() {
     // if (openPermission && caller && state.mailNotification.length > 0) {
     //   dispatch(setInComingCall(true));
     // }
-    if (openPermission && state.mailNotification.length > 0) {
+    if (
+      openPermission &&
+      state.mailNotification.length > 0 &&
+      state.mailNotification[0].request
+    ) {
       dispatch(setInComingCall(true));
     }
   }, [openPermission, state.mailNotification]);
@@ -302,12 +304,6 @@ function ChatRoom() {
       setCallee(null);
     }
   }, [callerRequest]);
-
-  useEffect(() => {
-    console.log("NOTIFICATION: ", state.mailNotification);
-  }, [state.mailNotification]);
-
-  // ISSUE 1: IN GROUP VIDEO CHAT 2nd CALL, IN CALLER, SOMETIMES TWO CALLEE POP UP ON VIDEO
 
   return (
     <div className="ChatRoom">

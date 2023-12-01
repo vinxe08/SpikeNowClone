@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { IoClose } from "react-icons/io5";
 import { BsSendCheckFill } from "react-icons/bs";
@@ -49,6 +49,30 @@ function Notification({ caller, sender }) {
     dispatch(setOnCall(true));
     socket.emit("on_accept", { ...caller, ignorer: user.email });
   };
+
+  useEffect(() => {
+    const ignoreResponse = (data) => {
+      if (caller.mailType === "group") {
+        dispatch(setCaller(null));
+        dispatch(pushRejectCall(caller));
+      } else {
+        dispatch(setCaller(null));
+        dispatch(setInComingCall(false));
+        dispatch(setIsCalling(false));
+        alert("CALL CANCELED");
+        // socket.emit("ignore_call", {
+        //   ...caller,
+        //   ignorer: user.email,
+        //   ignoreLocation: "Notification.jsx",
+        // });
+      }
+    };
+    socket.on("ignore_response", ignoreResponse);
+
+    return () => {
+      socket.off("ignore_response", ignoreResponse);
+    };
+  }, [socket]);
 
   return (
     <div className="incoming__call">
