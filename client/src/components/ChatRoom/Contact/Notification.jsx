@@ -52,20 +52,20 @@ function Notification({ caller, sender }) {
 
   useEffect(() => {
     const ignoreResponse = (data) => {
-      if (caller.mailType === "group") {
-        dispatch(setCaller(null));
-        dispatch(pushRejectCall(caller));
-      } else {
-        dispatch(setCaller(null));
-        dispatch(setInComingCall(false));
-        dispatch(setIsCalling(false));
-        alert("CALL CANCELED");
-        // socket.emit("ignore_call", {
-        //   ...caller,
-        //   ignorer: user.email,
-        //   ignoreLocation: "Notification.jsx",
-        // });
-      }
+      // if (caller.mailType === "group") {
+      //   dispatch(setCaller(null));
+      //   dispatch(pushRejectCall(caller));
+      // } else {
+      dispatch(setCaller(null));
+      dispatch(setInComingCall(false));
+      dispatch(setIsCalling(false));
+      alert("CALL CANCELED");
+      // socket.emit("ignore_call", {
+      //   ...caller,
+      //   ignorer: user.email,
+      //   ignoreLocation: "Notification.jsx",
+      // });
+      // }
     };
     socket.on("ignore_response", ignoreResponse);
 

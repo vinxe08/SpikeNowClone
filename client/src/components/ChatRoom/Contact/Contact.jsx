@@ -66,6 +66,18 @@ function Contact() {
         mailType: state[0].header.type ? "group" : "single",
       });
       dispatch(setType("Video Call"));
+      dispatch(
+        setCall({
+          id: recipient[0]._id,
+          name: state[0].header.to[0]?.name,
+          email: user.email,
+          type: "Video Call",
+          caller: state[0].header.type
+            ? state[0].header.subject[0]
+            : user.email,
+          mailType: state[0].header.type ? "group" : "single",
+        })
+      );
 
       socket.emit("create_request", {
         id: recipient[0]._id,
@@ -85,6 +97,18 @@ function Contact() {
         mailType: state[0].header.type ? "group" : "single",
       });
       dispatch(setType("Voice Call"));
+      dispatch(
+        setCall({
+          id: recipient[0]._id,
+          name: state[0].header.to[0]?.name,
+          email: user.email,
+          type: "Voice Call",
+          caller: state[0].header.type
+            ? state[0].header.subject[0]
+            : user.email,
+          mailType: state[0].header.type ? "group" : "single",
+        })
+      );
 
       socket.emit("create_request", {
         id: recipient[0]._id,

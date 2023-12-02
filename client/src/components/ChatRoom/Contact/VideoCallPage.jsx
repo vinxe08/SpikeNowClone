@@ -14,17 +14,20 @@ const Video = ({ video }) => {
         if (ref.current) {
           ref.current.srcObject = stream;
         }
+        // console.log("Video: ", video, ref, stream);
       });
     }
   }, [video]);
 
   return (
-    <div className="recipient__video">
-      <h1 className="video__user">{video.user}</h1>
+    <>
       {ref && (
-        <video className="video__camera" playsInline ref={ref} autoPlay />
+        <div className="recipient__video">
+          <h1 className="video__user">{video.user}</h1>
+          <video className="video__camera" playsInline ref={ref} autoPlay />
+        </div>
       )}
-    </div>
+    </>
   );
 };
 
@@ -32,6 +35,7 @@ function VideoCallPage() {
   const user = useSelector((state) => state.emailReducer.user.email);
 
   const { userVideo, peers, leaveCall } = useVideoChat();
+  console.log("PEERS: ", peers);
 
   return (
     <div className="VideoCallPage">
@@ -59,11 +63,9 @@ function VideoCallPage() {
             </div>
           )}
 
-          {peers
-            .filter((peer) => peer.user !== user)
-            .map((video) => (
-              <Video key={video.peerID} video={video} />
-            ))}
+          {peers.map((video) => (
+            <Video key={video.peerID} video={video} />
+          ))}
         </div>
       </div>
     </div>

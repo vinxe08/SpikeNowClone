@@ -17,17 +17,20 @@ const Audio = ({ voice }) => {
   }, [voice]);
 
   return (
-    <div className="recipient__voice">
-      <h1 className="voice__user">{voice.user}</h1>
+    <>
       {ref && (
-        <audio className="voice__camera" playsInline ref={ref} autoPlay />
+        <div className="recipient__voice">
+          <h1 className="voice__user">{voice.user}</h1>
+          <audio className="voice__camera" playsInline ref={ref} autoPlay />
+        </div>
       )}
-    </div>
+    </>
   );
 };
 
 function VoiceChatPage() {
   const user = useSelector((state) => state.emailReducer.user.email);
+
   const { userVoice, peers, leaveCall } = useVoiceChat();
 
   return (
@@ -56,11 +59,9 @@ function VoiceChatPage() {
             </div>
           )}
 
-          {peers
-            .filter((peer) => peer.user !== user)
-            .map((voice) => (
-              <Audio key={voice.peerID} voice={voice} />
-            ))}
+          {peers.map((voice) => (
+            <Audio key={voice.peerID} voice={voice} />
+          ))}
         </div>
       </div>
     </div>
